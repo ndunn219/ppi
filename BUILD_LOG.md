@@ -55,7 +55,7 @@ The first version taught with roughly 300-word summaries per topic, which made t
 
 ## Not done or not verified
 
-- **The AI tutor has not been called.** No API key was available here. The code path matches the current SDK's parameters (checked against the installed `anthropic` 1.16), but the first real call happens on Render.
+- **The AI tutor's explain-it-back call has been verified** against the live API (2026-10-20, after `.env` loading was added). The photo audit uses the same call with an image attached and has not yet been tried with a real photo.
 - **No content has been reviewed by a licensed PE.** The formulas are standard textbook forms, but table values (side friction by speed), editions and reference locators all need checking. Each lesson and template has a "reviewed by PE" flag, plus an admin action to set it.
 - **Real exam fidelity is approximate.** The reference panel mimics "one document at a time" by showing one PDF, but it doesn't reproduce the Pearson VUE viewer.
 - **Sag and crest lengths ignore practical minimums** (such as 3 × design speed), which a reviewer may want added.

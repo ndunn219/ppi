@@ -33,6 +33,8 @@ python3.14 -m venv .venv
 .venv/bin/python manage.py runserver
 ```
 
+For the AI tutor locally, put `ANTHROPIC_API_KEY=...` in a `.env` file at the project root (it is git-ignored). Settings read it at startup; real environment variables, as on Render, take precedence.
+
 To see the reports with data, create the demo student. It has five weeks of simulated practice, and you choose its password:
 
 ```bash

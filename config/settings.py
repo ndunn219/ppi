@@ -12,6 +12,28 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
+def load_dotenv(path):
+    """Read KEY=VALUE lines from a local .env into the environment.
+
+    For local development only: variables already set in the real
+    environment (as on Render) always win, and a missing file is fine.
+    """
+    if not path.exists():
+        return
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.removeprefix("export ").partition("=")
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        os.environ.setdefault(key.strip(), value)
+
+
+load_dotenv(BASE_DIR / ".env")
+
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-not-secret-change-me")
 DEBUG = os.environ.get("DEBUG", "1" if "RENDER" not in os.environ else "0") == "1"
 
