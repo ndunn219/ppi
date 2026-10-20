@@ -1,0 +1,22 @@
+{% extends "base_plain.html" %}
+{% block title %}Create an account{% endblock %}
+{% block body %}
+<div class="auth">
+    <div class="card auth-card">
+        <a class="brand" href="/"><span class="wordmark">PE<span>/</span>Prep</span><span class="brand-label">Transportation</span></a>
+        <p class="auth-intro">Start with a timed baseline. Your plan comes from it.</p>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+            {% endfor %}
+            <button class="btn btn-primary btn-block" type="submit">Create account</button>
+        </form>
+        <p class="note" style="text-align:center;margin-top:16px">Have an account? <a href="{% url 'login' %}">Log in</a></p>
+    </div>
+</div>
+{% endblock %}

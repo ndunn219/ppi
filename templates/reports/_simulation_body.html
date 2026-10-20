@@ -1,0 +1,26 @@
+{% load course %}
+<section class="kpis">
+    <div class="kpi"><span class="kpi-label">Score</span><span class="kpi-value">{{ d.score|pct }}</span><span class="kpi-foot">{{ d.correct }} of {{ d.total }}{% if d.unanswered %} · {{ d.unanswered }} blank{% endif %}</span></div>
+    <div class="kpi"><span class="kpi-label">Time used</span><span class="kpi-value">{{ d.minutes }} min</span><span class="kpi-foot">{% if d.limit_minutes %}of {{ d.limit_minutes }} allowed{% else %}untimed{% endif %}</span></div>
+    <div class="kpi"><span class="kpi-label">Date</span><span class="kpi-value" style="font-size:18px">{{ d.date }}</span><span class="kpi-foot">{{ d.kind }}</span></div>
+</section>
+{% if pacing %}
+<section class="card">
+    <div class="card-head"><h2>Pacing through the session</h2><span class="muted small">cumulative minutes; dashed = {{ d.pace_target|floatformat:0 }} min per question</span></div>
+    <svg class="chart" viewBox="0 0 {{ pacing.width }} {{ pacing.height }}" role="img" aria-label="Cumulative time by question against the target pace">
+        {% for t in pacing.ticks %}<line class="grid-line" x1="{{ pacing.left }}" x2="{{ pacing.right }}" y1="{{ t.y }}" y2="{{ t.y }}"/><text class="tick" x="{{ pacing.left|add:-6 }}" y="{{ t.y }}" text-anchor="end" dominant-baseline="middle">{{ t.label }}</text>{% endfor %}
+        <polyline class="line-amber" points="{{ pacing.target }}"/>
+        <polyline class="line" points="{{ pacing.actual }}"/>
+        <text class="tick" x="{{ pacing.left }}" y="{{ pacing.label_y }}">Q1</text>
+        <text class="tick" x="{{ pacing.end_x }}" y="{{ pacing.label_y }}" text-anchor="end">Q{{ pacing.n }}</text>
+    </svg>
+    <p class="note">Above the dashed line means behind pace at that point in the session.</p>
+</section>
+{% endif %}
+<div class="grid grid-2">
+    <section class="card"><div class="card-head"><h2>Score by area</h2></div>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Area</th><th class="r">Questions</th><th class="r">Correct</th><th class="r">Min / question</th></tr></thead>
+            <tbody>{% for a in d.by_area %}<tr><td>{{ a.area }}</td><td class="r">{{ a.n }}</td><td class="r">{{ a.accuracy|pct }}</td><td class="r">{{ a.minutes }}</td></tr>{% endfor %}</tbody></table></div></section>
+    <section class="card"><div class="card-head"><h2>Where the misses came from</h2></div>
+        {% for c in d.by_cause %}<div class="bar-row" style="grid-template-columns:1fr auto"><span>{{ c.cause }}</span><span class="r">{{ c.n }}</span></div>{% empty %}<p class="empty">No misses.</p>{% endfor %}</section>
+</div>

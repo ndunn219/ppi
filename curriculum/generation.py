@@ -6,6 +6,7 @@ in, the answer, four shuffled choices (each wrong one tagged with the
 mistake that produces it) and the worked steps.
 """
 
+import math
 import random
 from dataclasses import asdict
 
@@ -75,16 +76,26 @@ def draw(template, rng=None):
     }
 
 
+def _sig(x, figures=2):
+    """Round to significant figures for a readable range label."""
+    if x == 0:
+        return "0"
+    digits = figures - 1 - int(math.floor(math.log10(abs(x))))
+    value = round(x, digits)
+    return f"{value:,.{max(digits, 0)}f}"
+
+
 def estimate_buckets(answer, rng=None):
-    """Four ranges for Estimate first, one of which holds the answer."""
+    """Four ranges for Estimate first, each twice the one before, one of
+    which holds the answer. Doubling ranges test order of magnitude, which
+    is what an estimate is for."""
     rng = rng or random.Random()
-    width = abs(answer) * 0.5 or 1
-    offset = rng.randint(0, 3)
-    lo0 = answer - width * (offset + rng.uniform(0.15, 0.85))
+    k = rng.randint(0, 3)  # which bucket holds the answer
+    lo0 = answer / 2 ** (k + rng.uniform(0.15, 0.85))
     buckets = []
     for i in range(4):
-        lo = lo0 + i * width
-        buckets.append({"lo": lo, "hi": lo + width, "correct": lo <= answer < lo + width})
+        lo, hi = lo0 * 2**i, lo0 * 2 ** (i + 1)
+        buckets.append({"lo": lo, "hi": hi, "label": f"{_sig(lo)} to {_sig(hi)}", "correct": lo <= answer < hi})
     return buckets
 
 

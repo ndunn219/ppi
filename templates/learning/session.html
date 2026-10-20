@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}{{ session.get_kind_display }}{% endblock %}
+{% block page_title %}
+    <h1>{{ session.get_kind_display }}</h1>
+    <p class="subtitle">{% if session.spec_item %}{{ session.spec_item.name }} · {% endif %}{% if session.is_exam_style %}Exam rules: no hints, no feedback until you submit.{% else %}Feedback after every answer.{% endif %}</p>
+{% endblock %}
+{% block content %}
+<div class="runner-bar">
+    <span class="q-num" style="margin:0">Question {{ number }} of {{ total }}</span>
+    {% if deadline and not session.is_finished %}
+        <span>Time left <span class="timer" data-deadline="{{ deadline|date:'c' }}" data-finish-url="{% url 'learning:finish' session.id %}">—</span></span>
+    {% else %}
+        <span class="muted small">Pace target {{ pace_minutes|floatformat:0 }} min per question</span>
+    {% endif %}
+    {% if session.is_finished %}<a class="btn btn-small" href="{% url 'learning:results' session.id %}">Back to results</a>
+    {% elif not session.is_exam_style %}<form method="post" action="{% url 'learning:finish' session.id %}">{% csrf_token %}<button class="btn btn-small btn-ghost">End session</button></form>{% endif %}
+</div>
+<div class="runner{% if not session.is_exam_style and q.type != 'problem' %} solo{% endif %}">
+    <div>
+        <section class="card">
+            {% if show_feedback %}
+                <p class="q-stem">{% if instance %}{{ instance.stem }}{% elif drill %}{{ drill.prompt }}{% elif q.type == "units" %}Convert {{ q.q.value }} {{ q.q.src }} to {{ q.q.dst }}.{% endif %}</p>
+                {% if choices and q.type == "problem" %}
+                    <div class="choices">
+                        {% for c in choices %}
+                            <div class="choice {% if not c.cause %}is-correct{% elif att.response == c.label %}is-wrong{% endif %}"><span class="letter">{{ forloop.counter0|letter }}</span><span>{{ c.label }}</span>{% if att.response == c.label %}<span class="why">your answer</span>{% endif %}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% else %}
+                {% url 'learning:answer' session.id as action %}
+                {% include "partials/_question.html" with action=action %}
+            {% endif %}
+        </section>
+        {% if show_feedback %}
+            {% include "partials/_feedback.html" %}
+            <div class="q-actions" style="margin-top:16px">
+                <span></span>
+                {% if next_position is not None %}<a class="btn btn-primary" href="?q={{ next_position }}">Next question</a>
+                {% elif session.is_finished %}<a class="btn btn-primary" href="{% url 'learning:results' session.id %}">Results</a>
+                {% else %}<form method="post" action="{% url 'learning:finish' session.id %}">{% csrf_token %}<button class="btn btn-primary">See results</button></form>{% endif %}
+            </div>
+        {% endif %}
+    </div>
+    {% if session.is_exam_style or q.type == "problem" %}
+    <div class="stack">
+        {% if session.is_exam_style %}
+            <section class="card">
+                <div class="card-head"><h2>Questions</h2><span class="muted small">{{ answered|length }} answered · {{ session.flags|length }} flagged</span></div>
+                <nav class="navigator" aria-label="Jump to question">
+                    {% for n in nav %}<a class="{% if n.answered %}answered{% endif %}{% if n.flagged %} flagged{% endif %}{% if n.current %} current{% endif %}" href="?q={{ n.i }}">{{ n.i|add:1 }}</a>{% endfor %}
+                </nav>
+                {% if session.kind == "full_exam" %}<p class="note">The real exam offers an optional break at about the halfway point. Take one here too: the clock keeps running, as it would.</p>{% endif %}
+            </section>
+        {% endif %}
+        {% if q.type == "problem" %}{% include "partials/_refpanel.html" %}{% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

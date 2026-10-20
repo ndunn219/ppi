@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}Error journal{% endblock %}
+{% block page_title %}<h1>Error journal</h1><p class="subtitle">Every miss gets a cause. Missed problem types come back in new forms until you solve them twice.</p>{% endblock %}
+{% block page_actions %}
+    {% if open %}<form method="post" action="{% url 'learning:start' %}">{% csrf_token %}<button class="btn btn-primary" name="kind" value="replay">Replay {{ open|length }} open</button></form>{% endif %}
+{% endblock %}
+{% block content %}
+<div class="grid">
+    <section class="card">
+        <div class="card-head"><h2>Causes, last 30 days</h2></div>
+        {% for c in cause_rows %}
+            <div class="bar-row"><span>{{ c.label }}</span><div class="bar amber"><i style="width:{{ c.share|times:100 }}%"></i></div><span class="r">{{ c.n }}</span></div>
+        {% empty %}<p class="empty">No misses recorded.</p>{% endfor %}
+        {% if cause_rows.0.fix %}
+            <form method="post" action="{% url 'learning:start' %}" style="margin-top:12px">{% csrf_token %}<input type="hidden" name="kind" value="{{ cause_rows.0.fix.1 }}">
+                <p class="small secondary">Your top cause is {{ cause_rows.0.label|lower }}. {{ cause_rows.0.fix.2 }}</p><button class="btn btn-small">Start: {{ cause_rows.0.fix.0 }}</button></form>
+        {% endif %}
+    </section>
+    <section class="card span-2">
+        <div class="card-head"><h2>Open replays</h2></div>
+        {% if open %}
+        <div class="table-wrap"><table class="table">
+            <thead><tr><th>Problem type</th><th>Topic</th><th>Cause</th><th class="r">Solved</th><th>Since</th></tr></thead>
+            <tbody>{% for r in open %}<tr><td>{{ r.template.title }}</td><td>{{ r.template.spec_item.name }}</td><td>{{ r.get_cause_display }}</td><td class="r">{{ r.solved }} / 2</td><td>{{ r.opened_at|date:"M j" }}</td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% else %}<p class="empty">Nothing open.</p>{% endif %}
+        {% if closed %}<p class="note">Recently closed: {% for r in closed %}{{ r.template.title }}{% if not forloop.last %}, {% endif %}{% endfor %}.</p>{% endif %}
+    </section>
+</div>
+<section class="card">
+    <div class="card-head"><h2>Recent misses</h2></div>
+    {% if misses %}
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>When</th><th>Topic</th><th>Type</th><th>Your answer</th><th>Cause</th><th>Audit</th><th></th></tr></thead>
+        <tbody>{% for a in misses %}
+            <tr><td>{{ a.created_at|date:"M j" }}</td><td>{{ a.spec_item.name|default:"Units" }}</td><td>{{ a.get_kind_display }}</td><td>{{ a.response|truncatechars:30 }}</td><td>{{ a.get_cause_display }}</td>
+                <td class="secondary small">{{ a.audit|truncatechars:60 }}</td>
+                <td class="r">{% if a.session_id and a.session.kind != "lesson" %}<a href="{% url 'learning:session' a.session_id %}?q={{ a.position }}">Review</a>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="empty">No misses yet.</p>{% endif %}
+</section>
+{% endblock %}

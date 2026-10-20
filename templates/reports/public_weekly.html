@@ -1,0 +1,4 @@
+{% extends "reports/public_base.html" %}
+{% block title %}Weekly progress{% endblock %}
+{% block report_title %}Weekly progress, {{ d.start }} to {{ d.end }}{% endblock %}
+{% block report_body %}{% include "reports/_weekly_body.html" %}{% endblock %}

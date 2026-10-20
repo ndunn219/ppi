@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}My plan{% endblock %}
+{% block page_title %}<h1>Your personal plan</h1><p class="subtitle">Topics ordered by what studying them would add: exam weight times room to grow. {{ weeks }} week{{ weeks|pluralize }} at {{ profile.hours_per_week }} h/week is about {{ total_hours }} hours; about {{ study_hours }} go to topics, the rest to simulations and review.</p>{% endblock %}
+{% block page_actions %}
+    <a class="btn" href="{% url 'learning:onboarding' %}">Exam settings</a>
+    {% if est.diagnostic_done and not profile.plan_accepted_at %}
+        <form method="post" action="{% url 'learning:accept_plan' %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Accept plan</button></form>
+    {% endif %}
+{% endblock %}
+{% block content %}
+{% if not est.diagnostic_done %}
+    <div class="card" style="margin-bottom:16px">
+        <h2>Take the baseline first</h2>
+        <p class="secondary">Without a baseline every topic looks the same. The diagnostic takes about {{ rows|length|times:2|floatformat:0 }} questions plus a short lookup test.</p>
+        <form method="post" action="{% url 'learning:start' %}">{% csrf_token %}<input type="hidden" name="kind" value="diagnostic"><button class="btn btn-primary" type="submit">Start diagnostic</button></form>
+    </div>
+{% elif profile.plan_accepted_at %}
+    <ul class="messages"><li>Accepted on {{ profile.plan_accepted_at|date:"M j" }}. The order updates as you practice.</li></ul>
+{% endif %}
+<section class="card">
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>#</th><th>Topic</th><th>Area</th><th class="r">Exam weight</th><th>Estimated accuracy</th><th>Mastery</th><th class="r">Suggested hours</th><th></th></tr></thead>
+        <tbody>
+        {% for row in rows %}
+            <tr>
+                <td class="muted">{{ row.rank }}</td>
+                <td><a href="{% url 'learning:topic' row.e.item.code %}">{{ row.e.item.name }}</a></td>
+                <td class="secondary">{{ row.e.item.area.name }}</td>
+                <td class="r">{{ row.e.weight|pct:1 }}</td>
+                <td><div class="bar-row" style="grid-template-columns:1fr 3rem;padding:0"><div class="bar{% if row.e.p < 0.5 %} amber{% endif %}"><i style="width:{{ row.e.p|times:100 }}%"></i></div><span class="r small">{{ row.e.p|pct }}</span></div></td>
+                <td>{% level_badge row.e.level %}</td>
+                <td class="r">{{ row.hours }}</td>
+                <td class="r"><a class="btn btn-small" href="{% url 'learning:study' row.e.item.code %}">Study</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    <p class="note">Estimated accuracy blends your answers on each topic with your overall average, weighting recent work most. Unstudied topics start at 25%, the rate of guessing.</p>
+</section>
+{% endblock %}

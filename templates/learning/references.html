@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}References{% endblock %}
+{% block page_title %}<h1>References</h1><p class="subtitle">The exam supplies these as searchable PDFs. The course points to where each topic lives; it never reproduces licensed text.</p>{% endblock %}
+{% block content %}
+<div class="grid">
+    <section class="card span-2">
+        <div class="card-head"><h2>Documents</h2></div>
+        <div class="table-wrap"><table class="table">
+            <thead><tr><th>Short name</th><th>Title</th><th>Publisher</th><th>In the course</th></tr></thead>
+            <tbody>{% for r in refs %}
+                <tr><td><strong>{{ r.short_name }}</strong></td><td>{{ r.title }}</td><td>{{ r.publisher }}</td>
+                    <td>{% if r.is_public_domain %}<a href="{{ r.url }}" target="_blank" rel="noopener">Public domain: open it</a>{% else %}<span class="secondary small">{{ r.notes|default:"Use your own copy" }}</span>{% endif %}</td></tr>
+            {% endfor %}</tbody>
+        </table></div>
+    </section>
+    {% include "partials/_refpanel.html" %}
+</div>
+<section class="card">
+    <div class="card-head"><h2>Where each topic lives</h2><span class="muted small">Pointers to check against the editions the exam supplies</span></div>
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Topic</th><th>Reference</th><th>Where</th><th>What is there</th><th>Search terms</th></tr></thead>
+        <tbody>{% for it in items %}{% for loc in it.locations.all %}
+            <tr><td>{% if forloop.first %}<a href="{% url 'learning:topic' it.code %}">{{ it.name }}</a>{% endif %}</td><td>{{ loc.reference.short_name }}</td><td>{{ loc.locator }}</td><td class="secondary">{{ loc.what_is_there }}</td>
+                <td>{% for t in loc.search_term_list %}<span class="term">{{ t }}</span> {% endfor %}</td></tr>
+        {% endfor %}{% endfor %}</tbody>
+    </table></div>
+</section>
+{% endblock %}

@@ -90,10 +90,11 @@ def session_score(session):
     return sum(1 for a in attempts if a.is_correct) / total
 
 
-def finished_sims(student, kind=PracticeSession.Kind.FULL_EXAM):
-    return list(
-        PracticeSession.objects.filter(student=student, kind=kind, finished_at__isnull=False).order_by("-finished_at")
-    )
+def finished_sims(student, kind=PracticeSession.Kind.FULL_EXAM, before=None):
+    qs = PracticeSession.objects.filter(student=student, kind=kind, finished_at__isnull=False)
+    if before:
+        qs = qs.filter(finished_at__lte=before)
+    return list(qs.order_by("-finished_at"))
 
 
 def estimate(student, levels=None, now=None):
@@ -134,7 +135,7 @@ def estimate(student, levels=None, now=None):
     total_w = sum(e.weight for e in item_est) or 1
     topic = sum(e.weight * e.p for e in item_est) / total_w
 
-    sims = finished_sims(student)
+    sims = finished_sims(student, before=now)
     sim_scores = [(s, session_score(s)) for s in sims]
     recent = [sc for _, sc in sim_scores[:2] if sc is not None]
     b = min(0.6, 0.3 * len(recent))

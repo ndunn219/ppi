@@ -14,7 +14,6 @@ spaced review and error replay.
 """
 
 import random
-from datetime import timedelta
 
 from django.conf import settings
 from django.db.models import Count
@@ -305,6 +304,7 @@ def results(session):
         "correct": correct,
         "score": correct / total if total else 0,
         "seconds": sum(a.seconds for a in attempts),
+        "avg_seconds": sum(a.seconds for a in attempts) / total if total else None,
         "attempts": sorted(attempts, key=lambda a: a.position or 0),
         "by_cause": [{"cause": ErrorCause(r["cause"]).label, "key": r["cause"], "n": r["n"]} for r in by_cause],
         "by_area": [
@@ -327,7 +327,3 @@ FIXES = {
 
 def fix_for(cause):
     return FIXES.get(cause)
-
-
-def stale_cutoff():
-    return timezone.now() - timedelta(days=1)

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Practice{% endblock %}
+{% block page_title %}<h1>Practice</h1><p class="subtitle">Fifteen ways to practice, each aimed at one skill. Mix them: no session should be a single format.</p>{% endblock %}
+{% block content %}
+{% if open_sessions %}
+<section class="card" style="margin-bottom:16px">
+    <div class="card-head"><h2>Pick up where you left off</h2></div>
+    {% for s in open_sessions %}
+        <div class="bar-row"><span>{{ s.get_kind_display }}{% if s.spec_item %} · {{ s.spec_item.name }}{% endif %}</span><span class="muted small">{{ s.started_at|timesince }} ago · {{ s.items|length }} questions</span><a class="r" href="{% url 'learning:session' s.id %}">Resume</a></div>
+    {% endfor %}
+</section>
+{% endif %}
+{% for group, modes in modes %}
+    <h2 class="mode-group">{{ group }}</h2>
+    <div class="modes">
+        {% for kind, icon, tone, title, desc, length in modes %}
+            {% if kind == None %}
+                <a class="mode" href="{% url 'learning:cards' %}" style="color:inherit;text-decoration:none">
+                    <span class="mode-icon {{ tone }}"><svg><use href="#{{ icon }}"></use></svg></span>
+                    <h3>{{ title }}</h3><p>{{ desc }}</p>
+                    <div class="mode-meta"><span class="muted small">{{ length }}</span><span class="btn btn-small">{% if due_cards %}{{ due_cards }} due{% else %}Open{% endif %}</span></div>
+                </a>
+            {% elif kind == "explain" %}
+                <a class="mode" href="{% url 'learning:explain' %}" style="color:inherit;text-decoration:none">
+                    <span class="mode-icon {{ tone }}"><svg><use href="#{{ icon }}"></use></svg></span>
+                    <h3>{{ title }}</h3><p>{{ desc }}</p>
+                    <div class="mode-meta"><span class="muted small">{{ length }}</span><span class="btn btn-small">Open</span></div>
+                </a>
+            {% else %}
+                <form class="mode" method="post" action="{% url 'learning:start' %}">
+                    {% csrf_token %}
+                    <span class="mode-icon {{ tone }}"><svg><use href="#{{ icon }}"></use></svg></span>
+                    <h3>{{ title }}</h3><p>{{ desc }}</p>
+                    {% if kind == "drill" or kind == "estimate" or kind == "spot_error" or kind == "lookup" or kind == "timed_block" %}
+                        <select name="item" aria-label="Topic for {{ title }}">
+                            <option value="">{% if kind == "drill" %}Any topic{% else %}All topics{% endif %}</option>
+                            {% for it in items %}<option value="{{ it.code }}">{{ it.code }} · {{ it.name }}</option>{% endfor %}
+                        </select>
+                    {% endif %}
+                    <div class="mode-meta">
+                        <span class="muted small">{{ length }}</span>
+                        <button class="btn btn-small{% if kind == 'warmup' and due_items %} btn-primary{% endif %}" name="kind" value="{{ kind }}">{% if kind == "warmup" and due_items %}{{ due_items }} due{% elif kind == "replay" and open_replays %}{{ open_replays }} open{% else %}Start{% endif %}</button>
+                    </div>
+                </form>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endfor %}
+<p class="note" style="margin-top:16px">The lesson loop (prime, learn, worked example with fading, try, schedule) lives on each topic's page. Full simulations are under <a href="{% url 'learning:simulation' %}">Exam simulation</a>.</p>
+{% endblock %}

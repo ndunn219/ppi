@@ -1,0 +1,4 @@
+{% extends "reports/public_base.html" %}
+{% block title %}Simulation report{% endblock %}
+{% block report_title %}{{ d.kind }} report{% endblock %}
+{% block report_body %}{% include "reports/_simulation_body.html" %}{% endblock %}

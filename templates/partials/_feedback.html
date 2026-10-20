@@ -1,0 +1,71 @@
+{% load course %}
+<div class="feedback {% if att.is_correct %}feedback-good{% else %}feedback-bad{% endif %}">
+    <h2>{% if att.is_correct %}Correct{% elif not att.response %}No answer{% else %}Not quite{% endif %}</h2>
+    {% if q.type == "problem" %}
+        {% if chosen and chosen.cause %}<p><strong>You chose {{ att.response }}.</strong> {{ chosen.note }}</p>{% endif %}
+        <p>The answer is <strong>{{ answer_label }}</strong>.{% if att.hint_used %} Hint used: this counts as half an attempt.{% endif %}</p>
+        {% if estimate_correct is not None %}<p class="small">Your estimate was {% if estimate_correct %}in the right range{% else %}off. Check the order of magnitude before solving{% endif %}.</p>{% endif %}
+        {% if att.cited_reference %}<p class="small">You cited {{ att.cited_reference }}{% if att.cited_correct %}, the right place{% elif att.cited_correct is False %}. That isn't where this lives; see the topic's references{% endif %}.</p>{% endif %}
+    {% elif q.type == "lookup" %}
+        <p>The answer is <strong>{{ drill.answer }}</strong>. {{ drill.explanation }}</p>
+    {% elif q.type == "method" %}
+        <p>This calls for <strong>{{ instance.template.spec_item.method_name }}</strong> ({{ instance.template.spec_item.name }}).</p>
+        {% if instance.template.spec_item.cue_list %}<p class="small">Cues: {{ instance.template.spec_item.cue_list|join:", " }}.</p>{% endif %}
+    {% elif q.type == "spot_error" %}
+        <p>The wrong step was <strong>step {{ flaw|add:1 }}</strong>. {{ flaw_step.why }}</p>
+    {% elif q.type == "units" %}
+        <p>{{ q.q.value }} {{ q.q.src }} = <strong>{{ q.q.answer }} {{ q.q.dst }}</strong> ({{ q.q.rule }}).</p>
+    {% endif %}
+    <p class="small muted">Time: {{ att.seconds|minutes }}{% if att.seconds > 540 %}, well over the 6-minute pace{% endif %}.</p>
+</div>
+
+{% if steps and q.type != "lookup" %}
+<section class="card">
+    <h2>Verified solution</h2>
+    <ol class="steps">
+        {% for s in steps %}<li{% if q.type == "spot_error" and forloop.counter0 == flaw %} class="is-flaw"{% endif %}>{{ s.text }}{% if q.type == "spot_error" and forloop.counter0 == flaw %}<div class="small"><strong>The flawed version said:</strong> {{ s.wrong }}</div>{% endif %}</li>{% endfor %}
+    </ol>
+    {% if template.explain_prompt %}<p class="note">Check your understanding: <a href="{% url 'learning:explain' %}?item={{ template.spec_item.code }}">explain it back</a>.</p>{% endif %}
+</section>
+{% endif %}
+
+{% if fix %}
+<section class="card">
+    <div class="card-head"><h2>Fix it</h2><span class="badge badge-amber">{{ att.get_cause_display }}</span></div>
+    <p class="secondary">{{ fix.2 }}</p>
+    <form method="post" action="{% url 'learning:start' %}">{% csrf_token %}
+        <input type="hidden" name="kind" value="{{ fix.1 }}">
+        {% if att.spec_item and fix.1 != "units" and fix.1 != "method" %}<input type="hidden" name="item" value="{{ att.spec_item.code }}">{% endif %}
+        <input type="hidden" name="back" value="{{ request.get_full_path }}">
+        <button class="btn btn-small" type="submit">Start: {{ fix.0 }}</button>
+    </form>
+</section>
+{% endif %}
+
+{% if q.type == "problem" and att.response %}
+<section class="card">
+    <div class="card-head"><h2>Audit your work</h2>{% if att.audit_source %}<span class="badge badge-brand">{{ att.get_audit_source_display }}</span>{% endif %}</div>
+    {% if att.audit %}<div class="hint-box" style="white-space:pre-line">{{ att.audit }}</div>{% endif %}
+    {% if tutor_on %}
+        <form method="post" action="{% url 'learning:audit' att.id %}" enctype="multipart/form-data" class="stack">
+            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <label for="photo-{{ att.id }}">Photo of your scratch work</label>
+            <input id="photo-{{ att.id }}" type="file" name="photo" accept="image/*" capture="environment" required>
+            <p class="note">The tutor compares it line by line with the verified solution. The photo is read once and not stored.</p>
+            <button class="btn btn-small" type="submit">Ask the tutor</button>
+        </form>
+    {% endif %}
+    <details{% if not tutor_on %} open{% endif %} style="margin-top:12px">
+        <summary class="small"><strong>Self-audit checklist</strong>{% if not tutor_on %} (the AI tutor is off on this server){% endif %}</summary>
+        <form method="post" action="{% url 'learning:audit' att.id %}" style="margin-top:10px">
+            {% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+            {% for c in self_checks %}<label class="check"><input type="checkbox" name="checks" value="{{ c }}"> {{ c }}</label>{% endfor %}
+            {% if not att.is_correct %}
+                <div class="field" style="max-width:280px;margin-top:10px"><label for="cause-{{ att.id }}">What went wrong, in your view?</label>
+                    <select id="cause-{{ att.id }}" name="cause">{% for v, l in causes %}<option value="{{ v }}"{% if v == att.cause %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+            {% endif %}
+            <button class="btn btn-small" type="submit">Save self-audit</button>
+        </form>
+    </details>
+</section>
+{% endif %}

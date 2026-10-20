@@ -5,6 +5,7 @@ SECRET_KEY and ALLOWED_HOSTS come from the environment (render.yaml).
 """
 
 import os
+import time
 from pathlib import Path
 
 import dj_database_url
@@ -59,6 +60,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "learning.context_processors.shell",
+                "learning.context_processors.assets",
             ],
         },
     },
@@ -94,6 +96,9 @@ STORAGES = {
 }
 if DEBUG:
     STORAGES["staticfiles"] = {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"}
+
+# Appended to CSS and JS links so browsers pick up a new deploy at once.
+ASSET_VERSION = os.environ.get("RENDER_GIT_COMMIT", "")[:8] or str(int(time.time()))
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

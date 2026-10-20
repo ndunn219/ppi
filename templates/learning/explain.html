@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Explain it back{% endblock %}
+{% block crumbs %}<div class="crumbs"><a href="{% url 'learning:practice' %}">Practice</a> / Explain it back</div>{% endblock %}
+{% block page_title %}<h1>Explain it back</h1><p class="subtitle">{{ template.spec_item.name }}. One or two sentences, in your own words.</p>{% endblock %}
+{% block content %}
+<section class="card" style="max-width:760px">
+    <p class="q-stem">{{ template.explain_prompt }}</p>
+    {% if done %}
+        <div class="hint-box"><strong>You wrote:</strong> {{ att.response|default:"(nothing)" }}</div>
+        {% if att.audit %}<div class="feedback feedback-good"><h2>Tutor</h2><p>{{ att.audit }}</p></div>{% endif %}
+        <div class="refcard"><strong>Model explanation</strong>{{ template.explain_answer }}</div>
+        <p class="note">{% if not att.audit %}Compare your explanation with the model one. {% endif %}Explaining a step is not graded and does not change mastery.</p>
+        <div class="actions"><a class="btn btn-primary" href="{% url 'learning:explain' %}">Another one</a><a class="btn" href="{% url 'learning:topic' template.spec_item.code %}">Topic page</a></div>
+    {% else %}
+        <form method="post">{% csrf_token %}<input type="hidden" name="template" value="{{ template.id }}">
+            <div class="field"><label for="exp">Your explanation</label><textarea id="exp" name="answer" required></textarea></div>
+            <button class="btn btn-primary">Check my reasoning</button>
+        </form>
+    {% endif %}
+</section>
+{% endblock %}

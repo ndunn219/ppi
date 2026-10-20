@@ -1,0 +1,16 @@
+{% extends "base_plain.html" %}
+{% block body %}
+{% include "partials/_icons.html" %}
+<div class="report-page">
+    <div class="report-head">
+        <div>
+            <a class="brand" href="/" style="padding:0 0 8px"><span class="wordmark">PE<span>/</span>Prep</span><span class="brand-label">Transportation</span></a>
+            <h1>{% block report_title %}{% endblock %}</h1>
+            <p class="subtitle">{{ d.student }}{% if report.recipient %} · prepared for {{ report.recipient }}{% endif %} · {% if report.live %}live data{% else %}as of {{ d.generated|slice:":10" }}{% endif %}</p>
+        </div>
+        <button class="btn no-print" type="button" data-print>Save as PDF</button>
+    </div>
+    {% block report_body %}{% endblock %}
+    <p class="disclaimer">Shared by the student. It shows only work done in the PE Prep course: problems with new numbers each time, solved without hints unless marked. The readiness estimate is a stated guesstimate, not a prediction or a pass guarantee. Course content has not yet been reviewed by a licensed PE. This link expires on {{ report.expires_at|date:"M j, Y" }}.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}Exam simulation{% endblock %}
+{% block page_title %}<h1>Exam simulation</h1><p class="subtitle">Exam conditions end to end: about 6 minutes per question, references on screen, scratch work on a dry-erase surface, no feedback until you submit.</p>{% endblock %}
+{% block content %}
+<div class="grid">
+    <form class="card" method="post" action="{% url 'learning:start' %}">{% csrf_token %}
+        <h2>Full simulation</h2><p class="secondary">80 questions, 8 hours of exam time. The Ready zone needs two of these at the target within 3 weeks.</p>
+        <button class="btn btn-primary" name="kind" value="full_exam" data-confirm="Start an 8-hour timed simulation? The clock runs until you submit.">Start full simulation</button>
+    </form>
+    <form class="card" method="post" action="{% url 'learning:start' %}">{% csrf_token %}
+        <h2>Half-exam set</h2><p class="secondary">40 questions, 4 hours. Builds stamina before the full run.</p>
+        <button class="btn" name="kind" value="half_exam">Start half-exam</button>
+    </form>
+    <form class="card" method="post" action="{% url 'learning:start' %}">{% csrf_token %}
+        <h2>Mixed timed block</h2><p class="secondary">10 questions, 60 minutes. A short exam-rules set for any day.</p>
+        <button class="btn" name="kind" value="timed_block">Start block</button>
+    </form>
+</div>
+<section class="card">
+    <div class="card-head"><h2>Set up like exam day</h2></div>
+    <ul class="steps">
+        <li>Use a calculator from the NCEES approved list.</li>
+        <li>Work on a whiteboard or laminated sheet with a fine-tip marker, not paper.</li>
+        <li>Open your own NCEES Handbook copy in the reference panel. Only one document can be open at a time, as in the exam.</li>
+        <li>Put your phone away. The clock keeps running if you leave the page.</li>
+    </ul>
+</section>
+<section class="card">
+    <div class="card-head"><h2>Your simulations</h2></div>
+    {% if rows %}
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Type</th><th>Started</th><th class="r">Questions</th><th class="r">Score</th><th></th></tr></thead>
+        <tbody>{% for row in rows %}
+            <tr><td>{{ row.s.get_kind_display }}</td><td>{{ row.s.started_at|date:"M j, g:i a" }}</td><td class="r">{{ row.s.items|length }}</td><td class="r">{{ row.score|pct }}</td>
+                <td class="r">{% if row.s.finished_at %}<a href="{% url 'reports:simulation' row.s.id %}">Report</a>{% else %}<a href="{% url 'learning:session' row.s.id %}">Resume</a>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="empty">No simulations yet.</p>{% endif %}
+</section>
+{% endblock %}

@@ -222,6 +222,7 @@ class LessonProgress(models.Model):
 
     class Stage(models.TextChoices):
         PRIME = "prime", "Prime"
+        TESTOUT = "testout", "Test-out"
         LEARN = "learn", "Learn"
         FADE = "fade", "Worked example"
         TRY = "try", "Try"

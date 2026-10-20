@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Simulation report{% endblock %}
+{% block crumbs %}<div class="crumbs"><a href="{% url 'reports:index' %}">Reports</a> / {{ d.kind }}</div>{% endblock %}
+{% block page_title %}<h1>{{ d.kind }} report</h1><p class="subtitle">Score by area, pacing through the session, and where the misses came from.</p>{% endblock %}
+{% block page_actions %}<a class="btn" href="{% url 'learning:results' session.id %}">Review questions</a><button class="btn" type="button" data-print>Save as PDF</button>{% endblock %}
+{% block content %}
+{% include "reports/_simulation_body.html" %}
+{% include "reports/_share_form.html" %}
+{% endblock %}

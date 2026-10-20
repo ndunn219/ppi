@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Readiness report{% endblock %}
+{% block crumbs %}<div class="crumbs"><a href="{% url 'reports:index' %}">Reports</a> / Readiness</div>{% endblock %}
+{% block page_title %}<h1>Readiness report</h1><p class="subtitle">How much you have shown you know, and a guesstimate of whether you're ready to book the exam.</p>{% endblock %}
+{% block page_actions %}<button class="btn" type="button" data-print>Save as PDF</button>{% endblock %}
+{% block content %}
+{% include "reports/_readiness_body.html" %}
+{% include "reports/_share_form.html" %}
+{% endblock %}

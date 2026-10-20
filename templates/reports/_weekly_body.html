@@ -1,0 +1,20 @@
+{% load course %}
+<section class="kpis">
+    <div class="kpi"><span class="kpi-label">Answers</span><span class="kpi-value">{{ d.this_week.attempts }}</span><span class="kpi-foot">last week {{ d.last_week.attempts }}</span></div>
+    <div class="kpi"><span class="kpi-label">Problem accuracy</span><span class="kpi-value">{{ d.this_week.accuracy|pct }}</span><span class="kpi-foot">last week {{ d.last_week.accuracy|pct }} · {{ d.this_week.problems }} problems</span></div>
+    <div class="kpi"><span class="kpi-label">Time practicing</span><span class="kpi-value">{{ d.this_week.minutes }} min</span><span class="kpi-foot">last week {{ d.last_week.minutes }} min</span></div>
+    <div class="kpi"><span class="kpi-label">Active days</span><span class="kpi-value">{{ d.this_week.days }}</span><span class="kpi-foot">last week {{ d.last_week.days }}</span></div>
+    <div class="kpi"><span class="kpi-label">Readiness</span><span><span class="zone zone-{{ d.estimate.zone }}">{{ d.estimate.zone_label }}</span></span><span class="kpi-foot">{% if d.estimate.mid is not None %}{{ d.estimate.low|pct }}–{{ d.estimate.high|pct }}{% else %}{{ d.estimate.reason }}{% endif %}</span></div>
+</section>
+<div class="grid grid-2">
+    <section class="card"><div class="card-head"><h2>What moved</h2></div>
+        {% for m in d.moved %}<div class="bar-row" style="grid-template-columns:1fr auto"><span>{{ m.name }}</span><span class="small">{{ m.from }} → <strong>{{ m.to }}</strong></span></div>{% empty %}<p class="empty">No level changes this week.</p>{% endfor %}</section>
+    <section class="card"><div class="card-head"><h2>What slipped</h2></div>
+        {% for m in d.slipped %}<div class="bar-row" style="grid-template-columns:1fr auto"><span>{{ m.name }}</span><span class="small">{{ m.from }} → <strong>{{ m.to }}</strong></span></div>{% empty %}<p class="empty">Nothing slipped.</p>{% endfor %}
+        <p class="note">A level drops when its spaced review is overdue, until a review confirms it.</p></section>
+    <section class="card"><div class="card-head"><h2>Misses this week</h2></div>
+        {% for c in d.causes %}<div class="bar-row" style="grid-template-columns:1fr auto"><span>{{ c.cause }}</span><span class="r">{{ c.n }}</span></div>{% empty %}<p class="empty">No misses.</p>{% endfor %}</section>
+    <section class="card"><div class="card-head"><h2>Next week</h2></div>
+        {% for f in d.focus %}<div class="bar-row" style="grid-template-columns:1fr auto"><span>{{ f.name }}</span><span class="muted small">{{ f.p|pct }} estimated</span></div>{% empty %}<p class="empty">Keep the daily warm-up going.</p>{% endfor %}
+        <p class="note">{{ d.cards_reviewed }} flashcard reviews this week.</p></section>
+</div>

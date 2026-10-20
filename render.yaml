@@ -1,0 +1,31 @@
+# Render Blueprint: one web service and one Postgres database.
+# In the Render dashboard: New > Blueprint, pick this repo, then set
+# ANTHROPIC_API_KEY by hand (it is never committed).
+databases:
+  - name: pe-prep-db
+    plan: free
+    databaseName: pe_prep
+    user: pe_prep
+
+services:
+  - type: web
+    name: pe-prep
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: gunicorn config.wsgi:application --workers 2 --timeout 120
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.6
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pe-prep-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "0"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: TUTOR_MODEL
+        value: claude-opus-5-5

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}Topics{% endblock %}
+{% block page_title %}<h1>Topics</h1><p class="subtitle">Every item of the exam specification in this course, with what you have shown so far.</p>{% endblock %}
+{% block content %}
+{% for row in areas %}
+<section class="card">
+    <div class="card-head"><h2>{{ row.area.name }}</h2><span class="badge">{{ row.area.weight|pct }} of exam (placeholder weight)</span></div>
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Code</th><th>Topic</th><th>Mastery</th><th class="r">Accuracy</th><th class="r">Counted</th><th class="r">Median time</th><th></th></tr></thead>
+        <tbody>
+        {% for r in row.items %}
+            <tr>
+                <td class="muted">{{ r.item.code }}</td>
+                <td><a href="{% url 'learning:topic' r.item.code %}">{{ r.item.name }}</a><div class="small muted">{{ r.item.summary }}</div></td>
+                <td>{% level_badge r.m.level r.m.decayed %}</td>
+                <td class="r">{{ r.m.accuracy|pct }}</td>
+                <td class="r">{{ r.m.attempts_counted|floatformat:"-1" }}</td>
+                <td class="r">{{ r.m.median_seconds|minutes }}</td>
+                <td class="r"><a class="btn btn-small" href="{% url 'learning:study' r.item.code %}">Study</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+</section>
+{% endfor %}
+{% endblock %}

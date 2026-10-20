@@ -780,7 +780,7 @@ Watch out
 
 * A is in percent, not a decimal.
 * Always check S against L.
-* Many agencies use K = L/A tables instead. They give the same answer.
+* Design tables list K = L/A values instead. They come from the same equations, rounded for design.
 
 Where it lives
 --------------
