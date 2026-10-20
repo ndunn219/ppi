@@ -125,6 +125,23 @@
     </ul>
 </section>
 
+<section class="card" id="content">
+    <h2>How the content is checked</h2>
+    <p class="secondary">Every lesson, tutorial, problem type, flashcard and lookup question goes through two kinds of checking.</p>
+    <ul class="steps">
+        <li><strong>Automatic checks (all content, today).</strong> Each problem's answer and wrong choices are computed by code from standard formulas, and tests compare those calculations with hand-worked values. Every tutorial number was recomputed independently, and every diagram is rendered and tested across its full range of inputs.</li>
+        <li><strong>Review by a licensed PE.</strong> A licensed Professional Engineer reads each part as you see it and either approves it or asks for changes. Approval confirms the engineering is right, matches current practice and fits how the exam frames questions, which automatic checks can't confirm.</li>
+    </ul>
+    <p class="secondary">What the badges mean:</p>
+    <div class="table-wrap"><table class="table"><tbody>
+        <tr><td>{% include "partials/_review_badge.html" with state="approved" %}</td><td>A licensed PE approved this exact content. Their name, license and the date are shown beside it.</td></tr>
+        <tr><td>{% include "partials/_review_badge.html" with state="unreviewed" %}</td><td>Checked automatically, but no PE has approved it yet.</td></tr>
+        <tr><td>{% include "partials/_review_badge.html" with state="changes" %}</td><td>A reviewer found a problem; it is being fixed.</td></tr>
+        <tr><td>{% include "partials/_review_badge.html" with state="stale" %}</td><td>It was approved, then edited. Any change, even to the code that computes a problem's answers, sends it back for a fresh review.</td></tr>
+    </tbody></table></div>
+    <p class="note">So far, {{ content_review.approved }} of {{ content_review.total }} parts of the course are PE-reviewed.</p>
+</section>
+
 <section class="card" id="readiness">
     <h2>The readiness estimate</h2>
     <p class="secondary">A likely range for your exam score, built from the problems you've solved here, weighted toward recent work and by each area's share of the exam. Full simulations count for more as you take them.</p>
@@ -158,7 +175,7 @@
         <dt>Do the questions inside tutorials count?</dt><dd>No. They are for learning. They're saved, but only problems in the lesson loop and practice modes count toward mastery.</dd>
         <dt>Why did a topic's level go down?</dt><dd>Its spaced review is overdue. Do the daily warm-up and it comes back once you answer it.</dd>
         <dt>Can I skip a topic I already know?</dt><dd>Yes: get the cold try right and choose "test out".</dd>
-        <dt>Is the content checked by a licensed PE?</dt><dd>Not yet. Every lesson and problem carries a review flag that a reviewer sets in the admin; until then, treat the content as unreviewed.</dd>
+        <dt>Is the content checked by a licensed PE?</dt><dd>{% if content_review.all %}Yes: every part of the course has been reviewed and approved by a licensed PE.{% elif content_review.none %}Not yet. The content was written and checked by software and AI reviewers, but no licensed PE has approved any of it. Look for the <strong>PE-reviewed</strong> badge: until it appears, treat the content as unreviewed.{% else %}Partly: {{ content_review.approved }} of {{ content_review.total }} parts so far. Look for the <strong>PE-reviewed</strong> badge on each tutorial, problem type and flashcard; anything without it hasn't been approved yet.{% endif %} See <a href="#content">How the content is checked</a>.</dd>
         <dt>Where do I find something in the references?</dt><dd>Each topic page and tutorial lists where it lives and the search terms that find it fastest. <a href="{% url 'learning:references' %}">References</a> has the full list.</dd>
     </dl>
 </section>
@@ -177,6 +194,7 @@
         <li><a href="#review">Spaced review and flashcards</a></li>
         <li><a href="#errors">Fixing your mistakes</a></li>
         <li><a href="#exam">Exam simulations and references</a></li>
+        <li><a href="#content">How the content is checked</a></li>
         <li><a href="#readiness">The readiness estimate</a></li>
         <li><a href="#reports">Reports and sharing</a></li>
         <li><a href="#faq">Questions</a></li>

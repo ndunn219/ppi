@@ -36,6 +36,16 @@ The first version taught with roughly 300-word summaries per topic, which made t
 | VD1 was written first as the reference; the other 11 topics were written in parallel to the same pattern and then reviewed | Consistency across topics |
 | The old summary stays as each topic's "cheat sheet", beside the tutorial | Quick review before an exam |
 
+## PE review workflow
+
+| Decision | Why |
+| --- | --- |
+| Review in units per topic: lesson and tutorial, each problem type, flashcards as a group, lookup drills as a group (59 units) | Small enough to review in one sitting each; large enough not to be tedious |
+| An approval stores a fingerprint of the content, including a problem's solver source code | Any later change, by admin edit, reseed or code change, sends it back for review instead of keeping a stale approval |
+| Only users with a Content reviewer record (name and PE license) can decide; the admin shows review fields read-only | Approvals are attributable, and stamped with a license students can see |
+| "Needs changes" requires notes; every decision is kept in Review events | A reviewer's correction can't get lost, and there is an audit trail |
+| Students see badges on tutorials, topics, problem feedback and flashcards; shared reports state how much is reviewed | Unreviewed content is clearly labelled where it is used |
+
 ## How it was checked
 
 - 27 unit tests (`tests/`): every solver against hand-worked values, every template drawn 50 times (four distinct choices, one correct, every wrong one explained, at least one flawed step for Spot the error), mastery levels, decay, the review ladder and readiness zones.

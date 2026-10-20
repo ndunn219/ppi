@@ -29,6 +29,11 @@
                     {% if item.count %}<span class="nav-count">{{ item.count }}</span>{% endif %}
                 </a>
             {% endfor %}
+            {% if can_review %}
+                <a class="nav-item{% if request.path|slice:':8' == '/review/' %} is-active{% endif %}" href="{% url 'review:queue' %}">
+                    <svg aria-hidden="true"><use href="#i-bug"></use></svg><span>PE review</span>
+                </a>
+            {% endif %}
             {% if user.is_staff %}
                 <a class="nav-item" href="{% url 'admin:index' %}">
                     <svg aria-hidden="true"><use href="#i-gear"></use></svg><span>Admin</span>

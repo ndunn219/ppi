@@ -122,15 +122,83 @@ class ReferenceLocation(models.Model):
         return [t.strip() for t in self.search_terms.split(",") if t.strip()]
 
 
-class ReviewedContent(models.Model):
-    """Fields every piece of content carries for the licensed-PE review."""
+class ReviewStatus(models.TextChoices):
+    UNREVIEWED = "unreviewed", "Not yet reviewed"
+    APPROVED = "approved", "Approved"
+    CHANGES = "changes", "Needs changes"
 
-    reviewed_by_pe = models.BooleanField(default=False)
+
+class ReviewedContent(models.Model):
+    """Review fields every piece of content carries.
+
+    An approval covers the exact content approved: `reviewed_hash` stores a
+    fingerprint of it (curriculum.review.content_hash), and if the content
+    changes afterwards (an admin edit, a reseed, even a change to a
+    problem's solver code) the approval no longer counts and the item goes
+    back to the review queue.
+    """
+
+    review_status = models.CharField(max_length=12, choices=ReviewStatus.choices, default=ReviewStatus.UNREVIEWED)
     reviewer = models.CharField(max_length=120, blank=True)
+    reviewer_license = models.CharField(max_length=80, blank=True, help_text="State and license number.")
     reviewed_on = models.DateField(null=True, blank=True)
+    review_notes = models.TextField(blank=True, help_text="The reviewer's notes, for example what needs to change.")
+    reviewed_hash = models.CharField(max_length=64, blank=True, editable=False)
 
     class Meta:
         abstract = True
+
+    @property
+    def review_state(self):
+        """approved, stale (approved but changed since), changes or unreviewed."""
+        from .review import content_hash
+
+        if self.review_status == ReviewStatus.APPROVED:
+            return "approved" if self.reviewed_hash == content_hash(self) else "stale"
+        return self.review_status
+
+    @property
+    def is_approved(self):
+        return self.review_state == "approved"
+
+
+class ContentReviewer(models.Model):
+    """A licensed PE allowed to approve content. Added by an admin."""
+
+    user = models.OneToOneField("auth.User", on_delete=models.CASCADE, related_name="content_reviewer")
+    name = models.CharField(max_length=120, help_text="As it should appear on approved content.")
+    license_state = models.CharField(max_length=40)
+    license_number = models.CharField(max_length=40)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.name}, PE ({self.license_state} {self.license_number})"
+
+    @property
+    def license(self):
+        return f"{self.license_state} PE {self.license_number}"
+
+
+class ReviewEvent(models.Model):
+    """Every review decision, kept as an audit trail."""
+
+    content_type = models.ForeignKey("contenttypes.ContentType", on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    spec_item = models.ForeignKey("SpecItem", null=True, blank=True, on_delete=models.SET_NULL)
+    label = models.CharField(max_length=200)
+    status = models.CharField(max_length=12, choices=ReviewStatus.choices)
+    reviewer = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
+    reviewer_name = models.CharField(max_length=120)
+    reviewer_license = models.CharField(max_length=80, blank=True)
+    notes = models.TextField(blank=True)
+    content_hash = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_status_display()}: {self.label} by {self.reviewer_name}"
 
 
 class Lesson(ReviewedContent):
@@ -244,7 +312,7 @@ class ProblemTemplate(ReviewedContent):
         return self.title
 
 
-class Card(models.Model):
+class Card(ReviewedContent):
     """A spaced-repetition flashcard."""
 
     class Kind(models.TextChoices):
@@ -266,7 +334,7 @@ class Card(models.Model):
         return f"{self.spec_item.code} {self.get_kind_display()}: {self.front[:50]}"
 
 
-class LookupDrill(models.Model):
+class LookupDrill(ReviewedContent):
     """A "where would you look?" question for lookup sprints."""
 
     spec_item = models.ForeignKey(SpecItem, on_delete=models.CASCADE, related_name="lookup_drills")

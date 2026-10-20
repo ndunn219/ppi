@@ -11,6 +11,6 @@
         <button class="btn no-print" type="button" data-print>Save as PDF</button>
     </div>
     {% block report_body %}{% endblock %}
-    <p class="disclaimer">Shared by the student. It shows only work done in the PE Prep course: problems with new numbers each time, solved without hints unless marked. The readiness estimate is a stated guesstimate, not a prediction or a pass guarantee. Course content has not yet been reviewed by a licensed PE. This link expires on {{ report.expires_at|date:"M j, Y" }}.</p>
+    <p class="disclaimer">Shared by the student. It shows only work done in the PE Prep course: problems with new numbers each time, solved without hints unless marked. The readiness estimate is a stated guesstimate, not a prediction or a pass guarantee. {% if content_review.all %}All course content has been reviewed by a licensed PE.{% elif content_review.none %}Course content has not yet been reviewed by a licensed PE.{% else %}{{ content_review.approved }} of {{ content_review.total }} units of course content have been reviewed by a licensed PE.{% endif %} This link expires on {{ report.expires_at|date:"M j, Y" }}.</p>
 </div>
 {% endblock %}

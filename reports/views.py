@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from curriculum import review
 from learning.models import PracticeSession
 from learning.views import needs_profile
 
@@ -141,5 +142,12 @@ def public(request, token):
     return render(
         request,
         template,
-        {"d": payload, "report": report, "sections": report.sections, "public": True, **chart_context(report.kind, payload)},
+        {
+            "d": payload,
+            "report": report,
+            "sections": report.sections,
+            "public": True,
+            "content_review": review.course_summary(),
+            **chart_context(report.kind, payload),
+        },
     )

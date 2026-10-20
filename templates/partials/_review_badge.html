@@ -1,0 +1,6 @@
+{# One review state as a badge: approved, stale, changes, unreviewed or partial. #}
+{% if state == "approved" %}<span class="badge badge-good" title="Reviewed by a licensed PE">PE-reviewed</span>
+{% elif state == "partial" %}<span class="badge badge-amber" title="Some of this topic's content is PE-reviewed">Partly PE-reviewed</span>
+{% elif state == "stale" %}<span class="badge badge-amber" title="Approved, then changed; waiting for a new review">Changed since review</span>
+{% elif state == "changes" %}<span class="badge badge-bad" title="A reviewer asked for changes">Needs changes</span>
+{% else %}<span class="badge" title="Not yet reviewed by a licensed PE">Not yet PE-reviewed</span>{% endif %}

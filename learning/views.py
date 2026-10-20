@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from curriculum import review
 from curriculum.models import ExamModule, Reference, SpecArea, SpecItem
 from reports import readiness
 
@@ -202,7 +203,7 @@ def topics(request):
         items = []
         for it in area.items.all():
             m = levels.get(it.id)
-            items.append({"item": it, "m": m, "e": by_item.get(it.id)})
+            items.append({"item": it, "m": m, "e": by_item.get(it.id), "review": review.topic_summary(it)})
         areas.append({"area": area, "items": items})
     return render(request, "learning/topics.html", {"areas": areas})
 
@@ -213,17 +214,18 @@ def topic(request, code):
     m = mastery.recompute(request.user, [item])[item.id]
     lp = LessonProgress.objects.filter(student=request.user, spec_item=item).first()
     attempts = Attempt.objects.filter(student=request.user, spec_item=item).select_related("instance")[:12]
-    review = ItemReview.objects.filter(student=request.user, spec_item=item).first()
+    item_review = ItemReview.objects.filter(student=request.user, spec_item=item).first()
     replays = ErrorReplay.objects.filter(student=request.user, template__spec_item=item, closed_at__isnull=True)
     return render(
         request,
         "learning/topic.html",
         {
+            "content_review": review.topic_summary(item),
             "item": item,
             "m": m,
             "lp": lp,
             "attempts": attempts,
-            "review": review,
+            "review": item_review,
             "replays": replays,
             "locations": item.locations.select_related("reference"),
             "cards": item.cards.all(),
@@ -257,5 +259,11 @@ def help_page(request):
     return render(
         request,
         "learning/help.html",
-        {"loop": LOOP, "modes": MODES, "course": settings.COURSE, "phases": readiness.PHASES},
+        {
+            "loop": LOOP,
+            "modes": MODES,
+            "course": settings.COURSE,
+            "phases": readiness.PHASES,
+            "content_review": review.course_summary(),
+        },
     )

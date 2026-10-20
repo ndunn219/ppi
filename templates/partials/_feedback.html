@@ -25,6 +25,7 @@
     <ol class="steps">
         {% for s in steps %}<li{% if q.type == "spot_error" and forloop.counter0 == flaw %} class="is-flaw"{% endif %}>{{ s.text }}{% if q.type == "spot_error" and forloop.counter0 == flaw %}<div class="small"><strong>The flawed version said:</strong> {{ s.wrong }}</div>{% endif %}</li>{% endfor %}
     </ol>
+    {% if template %}{% include "partials/_review_note.html" with obj=template what="This problem type" %}{% endif %}
     {% if template.explain_prompt %}<p class="note">Check your understanding: <a href="{% url 'learning:explain' %}?item={{ template.spec_item.code }}">explain it back</a>.</p>{% endif %}
 </section>
 {% endif %}

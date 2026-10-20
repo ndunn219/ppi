@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}PE review{% endblock %}
+{% block page_title %}<h1>PE review</h1><p class="subtitle">Approve each unit of content once you have checked it. An approval covers the exact content you saw: if it changes later, it comes back here.</p>{% endblock %}
+{% block page_actions %}
+    <nav class="segment" aria-label="Show">
+        <a class="{% if show == 'open' %}is-active{% endif %}" href="?show=open">Waiting</a>
+        <a class="{% if show == 'all' %}is-active{% endif %}" href="?show=all">Everything</a>
+    </nav>
+{% endblock %}
+{% block content %}
+{% if not reviewer %}
+    <ul class="messages"><li class="warning">You can see the queue, but to approve content you need a reviewer record with your PE license. Add one under Content reviewers in the <a href="{% url 'admin:curriculum_contentreviewer_add' %}">admin</a>.</li></ul>
+{% endif %}
+<section class="kpis">
+    <div class="kpi"><span class="kpi-label">PE-reviewed</span><span class="kpi-value">{{ counts.approved }} / {{ total }}</span><span class="kpi-foot">review units</span></div>
+    <div class="kpi"><span class="kpi-label">Not yet reviewed</span><span class="kpi-value">{{ counts.unreviewed }}</span></div>
+    <div class="kpi"><span class="kpi-label">Needs changes</span><span class="kpi-value">{{ counts.changes }}</span></div>
+    <div class="kpi"><span class="kpi-label">Changed since review</span><span class="kpi-value">{{ counts.stale }}</span></div>
+</section>
+{% for a in areas %}
+<section class="card">
+    <div class="card-head"><h2>{{ a.area.name }}</h2></div>
+    {% for t in a.topics %}
+        <div class="review-topic">
+            <div class="card-head" style="margin-bottom:6px"><h3>{{ t.item.code }} · {{ t.item.name }}</h3><span class="muted small">{{ t.summary.approved }} of {{ t.summary.total }} reviewed</span></div>
+            {% if t.units %}
+            <div class="table-wrap"><table class="table">
+                <tbody>{% for u in t.units %}
+                    <tr><td><a href="{% url 'review:unit' u.key %}">{{ u.label }}</a>{% if u.count %} <span class="muted small">({{ u.count }} {{ u.noun }})</span>{% endif %}</td>
+                        <td>{% include "partials/_review_badge.html" with state=u.state %}</td>
+                        <td class="secondary small">{% if u.reviewer %}{{ u.reviewer }}, {{ u.reviewed_on|date:"M j, Y" }}{% endif %}</td>
+                        <td class="secondary small">{{ u.notes|truncatechars:60 }}</td></tr>
+                {% endfor %}</tbody>
+            </table></div>
+            {% else %}<p class="empty">Everything in this topic is reviewed.</p>{% endif %}
+        </div>
+    {% endfor %}
+</section>
+{% endfor %}
+{% endblock %}

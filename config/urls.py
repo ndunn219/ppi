@@ -15,6 +15,7 @@ urlpatterns = [
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("accounts/signup/", learning_views.signup, name="signup"),
     path("reports/", include("reports.urls")),
+    path("review/", include("curriculum.urls")),
     path("r/<str:token>/", include("reports.public_urls")),
     path("", include("learning.urls")),
 ]

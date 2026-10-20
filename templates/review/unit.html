@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static django_docutils course %}
+{% block title %}Review {{ item.code }}{% endblock %}
+{% block extra_head %}{% if blocks %}<script src="{% static 'js/tutorials.js' %}?v={{ asset_version }}" defer></script>{% if widget_script %}<script src="{% static widget_script %}?v={{ asset_version }}" defer></script>{% endif %}{% endif %}{% endblock %}
+{% block crumbs %}<div class="crumbs"><a href="{% url 'review:queue' %}">PE review</a> / {{ item.code }} {{ item.name }}</div>{% endblock %}
+{% block page_title %}<h1>{{ u.label }}</h1><p class="subtitle">{{ item.code }} · {{ item.name }} · {% include "partials/_review_badge.html" with state=u.state %}{% if u.reviewer %} · last decision by {{ u.reviewer }} ({{ u.reviewer_license }}), {{ u.reviewed_on|date:"M j, Y" }}{% endif %}</p>{% endblock %}
+{% block page_actions %}{% if next_url %}<a class="btn" href="{{ next_url }}">Skip to next</a>{% endif %}{% endblock %}
+{% block content %}
+<div class="grid" style="align-items:start">
+<div class="span-2">
+    {% if u.kind == "lesson" %}
+        <section class="card">
+            <h2>Summary (the topic's cheat sheet)</h2>
+            <div class="lesson">{% with content=lesson.body %}{% rst content show_title=False %}{% endwith %}</div>
+        </section>
+        <h2 style="margin:24px 0 10px">Tutorial, as students see it</h2>
+        <p class="note" style="margin-bottom:12px">Open every "Try it" and worked example: approval covers the explanations, answers, tolerances and figures too.</p>
+        {% include "partials/_tutorial.html" %}
+    {% elif u.kind == "template" %}
+        <section class="card">
+            <h2>Template</h2>
+            <p class="q-stem">{{ template.stem }}</p>
+            <div class="table-wrap"><table class="table"><tbody>
+                <tr><td>Parameter ranges</td><td><code>{{ template.params }}</code></td></tr>
+                <tr><td>Answer unit · decimals</td><td>{{ template.answer_unit|default:"—" }} · {{ template.decimals }}</td></tr>
+                <tr><td>Explain-it-back</td><td>{{ template.explain_prompt|default:"—" }}<div class="small secondary">{{ template.explain_answer }}</div></td></tr>
+            </tbody></table></div>
+        </section>
+        {% for s in samples %}
+            <section class="card">
+                <div class="card-head"><h3>Sample {{ forloop.counter }} of 3, freshly drawn</h3><span class="muted small">Reload for new numbers</span></div>
+                <p class="q-stem">{{ s.stem }}</p>
+                <div class="choices">{% for c in s.choices %}<div class="choice{% if not c.cause %} is-correct{% endif %}"><span class="letter">{{ forloop.counter0|letter }}</span><span>{{ c.label }}</span><span class="why">{% if c.cause %}{{ c.cause }}: {{ c.note }}{% else %}correct{% endif %}</span></div>{% endfor %}</div>
+                <ol class="steps">{% for st in s.steps %}<li>{{ st.text }}{% if st.wrong %}<div class="small secondary">Spot-the-error version: {{ st.wrong }} <em>({{ st.why }})</em></div>{% endif %}</li>{% endfor %}</ol>
+            </section>
+        {% endfor %}
+        <section class="card">
+            <details><summary><strong>Solver code</strong> <span class="muted small">(approval covers this too: a code change sends the problem back for review)</span></summary>
+                <pre class="literal-block" style="margin-top:10px;white-space:pre;overflow-x:auto;font-size:12px">{{ source }}</pre></details>
+        </section>
+    {% elif u.kind == "cards" %}
+        <section class="card">
+            <div class="table-wrap"><table class="table">
+                <thead><tr><th>Kind</th><th>Front</th><th>Back</th></tr></thead>
+                <tbody>{% for c in u.objects %}<tr><td class="secondary">{{ c.get_kind_display }}</td><td>{{ c.front }}</td><td><code>{{ c.back }}</code></td></tr>{% endfor %}</tbody>
+            </table></div>
+        </section>
+    {% elif u.kind == "drills" %}
+        {% for d in u.objects %}
+            <section class="card">
+                <p class="q-stem">{{ d.prompt }}</p>
+                <div class="choices">
+                    <div class="choice is-correct"><span>{{ d.answer }}</span><span class="why">correct</span></div>
+                    <div class="choice"><span>{{ d.wrong_1 }}</span></div><div class="choice"><span>{{ d.wrong_2 }}</span></div><div class="choice"><span>{{ d.wrong_3 }}</span></div>
+                </div>
+                <p class="secondary small">{{ d.explanation }}</p>
+            </section>
+        {% endfor %}
+    {% endif %}
+</div>
+<aside class="stack" style="position:sticky;top:16px">
+    <section class="card">
+        <h2>Your decision</h2>
+        {% if reviewer %}
+            <form method="post" class="stack">{% csrf_token %}
+                <p class="small secondary">Signing as <strong>{{ reviewer.name }}</strong>, {{ reviewer.license }}.</p>
+                <div><label for="notes">Notes</label><textarea id="notes" name="notes" placeholder="Required if changes are needed: what is wrong and what it should say.">{{ u.notes }}</textarea></div>
+                <div class="actions">
+                    <button class="btn btn-primary" name="decision" value="approved" data-confirm="Approve this content as technically correct? Your name and license will be shown to students.">Approve</button>
+                    <button class="btn" name="decision" value="changes">Needs changes</button>
+                </div>
+                <p class="note">Approving stamps your name, license and today's date on {% if u.objects|length > 1 %}all {{ u.objects|length }} items{% else %}this content{% endif %}, and shows students it is PE-reviewed.</p>
+            </form>
+        {% else %}
+            <p class="secondary small">Only licensed reviewers can approve. An admin adds reviewers under Content reviewers.</p>
+        {% endif %}
+    </section>
+    <section class="card">
+        <h2>History</h2>
+        {% for e in history %}<div class="small" style="margin-bottom:8px"><strong>{{ e.get_status_display }}</strong> by {{ e.reviewer_name }}, {{ e.created_at|date:"M j, Y" }}{% if e.notes %}<div class="secondary">{{ e.notes }}</div>{% endif %}</div>
+        {% empty %}<p class="empty">No decisions yet.</p>{% endfor %}
+    </section>
+</aside>
+</div>
+{% endblock %}

@@ -2,7 +2,8 @@
 {% load course %}
 {% block title %}{{ item.name }}{% endblock %}
 {% block crumbs %}<div class="crumbs"><a href="{% url 'learning:topics' %}">Topics</a> / {{ item.area.name }}</div>{% endblock %}
-{% block page_title %}<h1>{{ item.name }}</h1><p class="subtitle">{{ item.summary }}</p>{% endblock %}
+{% block page_title %}<h1>{{ item.name }}</h1><p class="subtitle">{{ item.summary }}</p>
+    <p class="review-note" style="margin-top:6px">{% include "partials/_review_badge.html" with state=content_review.state %}<span>{{ content_review.approved }} of {{ content_review.total }} parts of this topic reviewed by a licensed PE. <a href="{% url 'learning:help' %}#content">How content is checked</a></span></p>{% endblock %}
 {% block page_actions %}
     <a class="btn" href="{% url 'learning:tutorial' item.code %}">Tutorial</a>
     <a class="btn btn-primary" href="{% url 'learning:study' item.code %}">{% if lp.stage == "done" %}Review the lesson{% elif lp %}Continue the lesson{% else %}Start the lesson{% endif %}</a>

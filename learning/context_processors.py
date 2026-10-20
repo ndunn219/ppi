@@ -32,7 +32,9 @@ def shell(request):
         href = reverse(name)
         active = path == href if href == "/" else path.startswith(href)
         items.append({"label": label, "href": href, "icon": icon, "count": count, "active": active})
-    return {"nav_items": items, "due_cards": due_cards, "due_items": due_items, "open_replays": open_replays}
+    reviewer = getattr(user, "content_reviewer", None)
+    can_review = user.is_superuser or bool(reviewer and reviewer.is_active)
+    return {"nav_items": items, "due_cards": due_cards, "due_items": due_items, "open_replays": open_replays, "can_review": can_review}
 
 
 def assets(request):

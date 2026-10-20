@@ -1,11 +1,12 @@
 from django.contrib import admin
-from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 from django_docutils.lib.publisher import publish_html_from_source
 
 from .generation import draw
 from .models import (
     Card,
+    ContentReviewer,
+    ReviewEvent,
     ExamModule,
     Lesson,
     LookupDrill,
@@ -18,10 +19,22 @@ from .models import (
 )
 
 
-@admin.action(description="Mark as reviewed by a licensed PE")
-def mark_reviewed(modeladmin, request, queryset):
-    name = request.user.get_full_name() or request.user.username
-    queryset.update(reviewed_by_pe=True, reviewer=name, reviewed_on=timezone.localdate())
+REVIEW_FIELDS = ["review_status", "reviewer", "reviewer_license", "reviewed_on", "review_notes"]
+
+
+@admin.display(description="PE review")
+def review_state(obj):
+    from .review import STATE_LABELS
+
+    return STATE_LABELS[obj.review_state]
+
+
+class ReviewFieldsMixin:
+    """Review fields are shown but set only from the review page (/review/),
+    which stamps the reviewer's license and keeps the audit trail."""
+
+    def get_readonly_fields(self, request, obj=None):
+        return list(super().get_readonly_fields(request, obj)) + REVIEW_FIELDS
 
 
 class SpecAreaInline(admin.TabularInline):
@@ -120,14 +133,13 @@ class TutorialBlockAdmin(admin.ModelAdmin):
 
 
 @admin.register(Lesson)
-class LessonAdmin(admin.ModelAdmin):
+class LessonAdmin(ReviewFieldsMixin, admin.ModelAdmin):
     inlines = [TutorialBlockInline]
-    list_display = ["title", "spec_item", "minutes", "reviewed_by_pe", "reviewed_on"]
-    list_filter = ["reviewed_by_pe", "spec_item__area"]
+    list_display = ["title", "spec_item", "minutes", review_state, "reviewer", "reviewed_on"]
+    list_filter = ["review_status", "spec_item__area"]
     search_fields = ["title", "body"]
-    actions = [mark_reviewed]
     readonly_fields = ["preview"]
-    fields = ["spec_item", "title", "minutes", "body", "preview", "reviewed_by_pe", "reviewer", "reviewed_on"]
+    fields = ["spec_item", "title", "minutes", "body", "preview"] + REVIEW_FIELDS
 
     @admin.display(description="Rendered")
     def preview(self, obj):
@@ -137,12 +149,11 @@ class LessonAdmin(admin.ModelAdmin):
 
 
 @admin.register(ProblemTemplate)
-class ProblemTemplateAdmin(admin.ModelAdmin):
-    list_display = ["title", "spec_item", "solver", "difficulty", "est_minutes", "is_active", "reviewed_by_pe"]
-    list_filter = ["is_active", "reviewed_by_pe", "difficulty", "spec_item__area"]
+class ProblemTemplateAdmin(ReviewFieldsMixin, admin.ModelAdmin):
+    list_display = ["title", "spec_item", "solver", "difficulty", "est_minutes", "is_active", review_state]
+    list_filter = ["is_active", "review_status", "difficulty", "spec_item__area"]
     search_fields = ["title", "slug", "stem"]
     prepopulated_fields = {"slug": ["title"]}
-    actions = [mark_reviewed]
     readonly_fields = ["sample"]
 
     @admin.display(description="A freshly drawn instance")
@@ -161,14 +172,33 @@ class ProblemTemplateAdmin(admin.ModelAdmin):
 
 
 @admin.register(Card)
-class CardAdmin(admin.ModelAdmin):
-    list_display = ["front", "kind", "spec_item"]
-    list_filter = ["kind", "spec_item__area"]
+class CardAdmin(ReviewFieldsMixin, admin.ModelAdmin):
+    list_display = ["front", "kind", "spec_item", review_state]
+    list_filter = ["kind", "review_status", "spec_item__area"]
     search_fields = ["front", "back"]
 
 
 @admin.register(LookupDrill)
-class LookupDrillAdmin(admin.ModelAdmin):
-    list_display = ["prompt", "answer", "spec_item", "seconds_target"]
-    list_filter = ["spec_item__area"]
+class LookupDrillAdmin(ReviewFieldsMixin, admin.ModelAdmin):
+    list_display = ["prompt", "answer", "spec_item", "seconds_target", review_state]
+    list_filter = ["review_status", "spec_item__area"]
     search_fields = ["prompt", "answer"]
+
+
+@admin.register(ContentReviewer)
+class ContentReviewerAdmin(admin.ModelAdmin):
+    list_display = ["name", "user", "license_state", "license_number", "is_active"]
+    list_filter = ["is_active"]
+
+
+@admin.register(ReviewEvent)
+class ReviewEventAdmin(admin.ModelAdmin):
+    list_display = ["created_at", "label", "status", "reviewer_name", "reviewer_license"]
+    list_filter = ["status", "spec_item__area"]
+    search_fields = ["label", "notes", "reviewer_name"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False

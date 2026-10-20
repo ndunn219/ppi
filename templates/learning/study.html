@@ -79,7 +79,8 @@
     <div class="grid" style="align-items:start">
         <div class="span-2">
             {% if blocks %}
-                <p class="t-progress" style="margin-bottom:12px">Interactive tutorial · about {{ lesson.minutes }} minutes · <span data-tutorial-progress>{{ activity_count }} activities</span></p>
+                <p class="t-progress" style="margin-bottom:4px">Interactive tutorial · about {{ lesson.minutes }} minutes · <span data-tutorial-progress>{{ activity_count }} activities</span></p>
+                {% include "partials/_review_note.html" with obj=lesson what="This tutorial" %}
                 {% include "partials/_tutorial.html" %}
             {% else %}
                 <section class="card"><div class="lesson">{% with content=lesson.body %}{% rst content show_title=False %}{% endwith %}</div></section>

@@ -7,7 +7,7 @@
 <section class="card">
     <div class="card-head"><h2>{{ row.area.name }}</h2><span class="badge">{{ row.area.weight|pct }} of exam (placeholder weight)</span></div>
     <div class="table-wrap"><table class="table">
-        <thead><tr><th>Code</th><th>Topic</th><th>Mastery</th><th class="r">Accuracy</th><th class="r">Counted</th><th class="r">Median time</th><th></th></tr></thead>
+        <thead><tr><th>Code</th><th>Topic</th><th>Mastery</th><th class="r">Accuracy</th><th class="r">Counted</th><th class="r">Median time</th><th>Content</th><th></th></tr></thead>
         <tbody>
         {% for r in row.items %}
             <tr>
@@ -17,6 +17,7 @@
                 <td class="r">{{ r.m.accuracy|pct }}</td>
                 <td class="r">{{ r.m.attempts_counted|floatformat:"-1" }}</td>
                 <td class="r">{{ r.m.median_seconds|minutes }}</td>
+                <td>{% include "partials/_review_badge.html" with state=r.review.state %}</td>
                 <td class="r"><a class="btn btn-small" href="{% url 'learning:study' r.item.code %}">Study</a></td>
             </tr>
         {% endfor %}

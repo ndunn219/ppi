@@ -69,9 +69,13 @@ To get into the admin, open the web service's Shell in Render and run:
 python manage.py createsuperuser
 ```
 
+## PE review
+
+Licensed reviewers approve content at `/review/`, one unit at a time: each topic's lesson and tutorial, each problem type (including its solver code), its flashcards and its lookup drills. To add a reviewer, create a user, then add a Content reviewer record for them in the admin with their name and PE license. Approval stamps the reviewer, license and date on the content, and students see a "PE-reviewed" badge. An approval covers the exact content approved: if it is edited later, or reseeded with different text, it goes back to the queue as "Changed since review". Every decision is kept in Review events.
+
 ## Content status
 
-None of the content has been reviewed by a licensed PE. Area weights are placeholders. Reference locators point to chapters and parts by name and need checking against the editions the exam supplies. The course never hosts or quotes licensed reference text, and the AI tutor never sees it. Only the public-domain MUTCD is linked. Students open their own PDFs in a viewer that runs entirely in their browser.
+None of the content has been reviewed by a licensed PE yet (see PE review above). Area weights are placeholders. Reference locators point to chapters and parts by name and need checking against the editions the exam supplies. The course never hosts or quotes licensed reference text, and the AI tutor never sees it. Only the public-domain MUTCD is linked. Students open their own PDFs in a viewer that runs entirely in their browser.
 
 See `BUILD_LOG.md` for the decisions made while building it.
 
