@@ -35,27 +35,26 @@ The curve shown is the *minimum* length for the S you choose. On a crest, the am
         {
             "kind": "check",
             "title": "Predict before you slide",
-            "prompt": "On a crest with A = 5%, the S < L formula gives about 209 ft for S = 300 ft. Using the same formula, predict the length for **S = 600 ft**, then check with the explorer.",
+            "prompt": "On a crest with A = 5%, a stopping sight distance of **450 ft** needs L = 5 × 450² / 2158 = 469 ft, and S < L holds. Predict the length for **S = 900 ft**, then check with the explorer.",
             "choices": [
-                {"label": "About 834 ft, four times as long", "correct": True, "why": "When S < L, L = AS² / 2158, so L grows with the square of S. Doubling S multiplies L by four: 5 × 600² / 2158 = 834 ft."},
-                {"label": "About 417 ft, twice as long", "correct": False, "why": "L is not proportional to S. In the S < L formula S is squared, so doubling S quadruples L."},
-                {"label": "About 209 ft, the same", "correct": False, "why": "A longer sight distance always needs a flatter crest, so L must grow."},
-                {"label": "About 1,670 ft, eight times as long", "correct": False, "why": "That would be L proportional to S³. The formula has S², so the factor is 2² = 4."},
+                {"label": "About 1,877 ft, four times as long", "correct": True, "why": "When S < L, L = AS² / 2158, so L grows with the square of S. Doubling S multiplies L by four: 5 × 900² / 2158 = 1,877 ft."},
+                {"label": "About 938 ft, twice as long", "correct": False, "why": "L is not proportional to S. In the S < L formula S is squared, so doubling S quadruples L."},
+                {"label": "About 469 ft, the same", "correct": False, "why": "A longer sight distance always needs a flatter crest, so L must grow."},
+                {"label": "About 3,754 ft, eight times as long", "correct": False, "why": "That would be L proportional to S³. The formula has S², so the factor is 2² = 4."},
             ],
             "hint": "Look at the S < L formula, L = AS² / 2158. What happens to S² when S doubles?",
             "explanation": """
-Check the starting point first: 5 × 300² / 2158 = 208.5 ft. That is *less* than S = 300 ft, so for S = 300 ft the S < L formula doesn't actually hold. The S > L formula governs there, and gives 2 × 300 − 2158/5 = 168 ft.
-
-For S = 600 ft:
+Both sight distances are in the S < L case, so the squared relationship applies directly:
 
 ::
 
-    L = 5 × 600² / 2158 = 834 ft     (834 > 600, so S < L holds)
+    S = 450 ft:  L = 5 × 450² / 2158 = 469 ft     (469 > 450, so S < L holds)
+    S = 900 ft:  L = 5 × 900² / 2158 = 1,877 ft   (1,877 > 900, so S < L holds)
 
-The lesson in the trap: the squared relationship is real, but **always check which case applies**. For long sight distances the S < L formula governs, and length rises quickly with S.
+Doubling S quadruples L. That is why high design speeds need such long crests. But the shortcut only works when **both** lengths are in the same case: always check S against L before scaling.
 """,
             "widget": PROFILE,
-            "config": {"values": {"kind": "crest", "A": 5, "S": 600}},
+            "config": {"values": {"kind": "crest", "A": 5, "S": 900}},
         },
         {
             "kind": "text",
@@ -181,7 +180,7 @@ The figure shows the beam leaving the headlight at the PVC and landing on the ro
                 {"think": "Which formula now, and what is its result?", "text": "S > L: L = 2 × 400 − 1,800 / 4 = 800 − 450 = **350 ft**."},
                 {"text": "Check: 350 < 400, so S > L holds. **L = 350 ft.**"},
             ],
-            "explanation": "The two results, 355.6 and 350 ft, are close because S is near the crossover where L = S. Close to the crossover, picking the wrong formula costs little. Far from it, the error can be large.",
+            "explanation": "The two results, 355.6 and 350 ft, are close because the resulting L (350 ft) is close to S (400 ft). Close to the crossover, picking the wrong formula costs little. Far from it, the error can be large.",
             "widget": PROFILE,
             "config": {"values": {"kind": "sag", "A": 4, "S": 400}},
         },
@@ -246,9 +245,9 @@ When an answer is wildly small, suspect the units of A first.
                 {"text": "Required 593 ft ≤ existing 600 ft. **The curve is long enough**, with about 7 ft to spare."},
                 {"think": "Work it the other way: how much sight distance does the 600-ft curve provide?", "text": "Solve 600 = 4S² / 2158 for S: S = √(2158 × 600 / 4) = **569 ft**, which is at least the 566 ft needed. Same conclusion."},
             ],
-            "explanation": "Checking an existing curve can go either way: compute the required L from S, or the available S from L. The second is handy when a question asks for the highest safe speed. Note how small the margin is here: on a downgrade, or with a longer reaction time, this curve would fall short.",
+            "explanation": "Checking an existing curve can go either way: compute the required L from S, or the available S from L. The second is handy when a question asks for the highest safe speed. Note how small the margin is here: on a downgrade, or with a longer reaction time, this curve would fall short. The verdict also relies on the computed 565.5 ft; a rounded-up design SSD of 570 ft would need 4 × 570² / 2158 = 602 ft, slightly more than the curve provides.",
             "widget": PROFILE,
-            "config": {"values": {"kind": "crest", "A": 4, "S": 575}},
+            "config": {"values": {"kind": "crest", "A": 4, "S": 565.5}},
         },
         {
             "kind": "check",

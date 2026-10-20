@@ -5,7 +5,54 @@
 {% block crumbs %}<div class="crumbs"><a href="{% url 'learning:topics' %}">Topics</a> / <a href="{% url 'learning:topic' item.code %}">{{ item.name }}</a></div>{% endblock %}
 {% block page_title %}<h1>{{ item.name }}</h1><p class="subtitle">You never go more than 10 minutes without solving something.</p>{% endblock %}
 {% block content %}
-<div class="loop" aria-label="Lesson steps">{% for s in loop_state %}<span class="is-{{ s.state }}">{{ forloop.counter }}. {{ s.label }}</span>{% endfor %}</div>
+<nav class="loop" aria-label="Lesson steps">
+    {% for s in loop_state %}
+        {% if s.url %}<a class="is-{{ s.state }}{% if s.viewing %} is-viewing{% endif %}" href="{{ s.url }}" title="{{ s.desc }}"{% if s.viewing %} aria-current="step"{% endif %}>{{ s.number }}. {{ s.label }}</a>
+        {% else %}<span class="is-locked" title="{{ s.desc }} Unlocks after the steps before it.">{{ s.number }}. {{ s.label }}</span>{% endif %}
+    {% endfor %}
+    <a class="loop-help" href="{% url 'learning:help' %}#lesson-loop">How the lesson loop works</a>
+</nav>
+
+{% if review %}
+    <div class="review-banner">
+        <span>You're looking back at <strong>{{ review.label }}</strong>. Your progress is saved.</span>
+        <a class="btn btn-primary btn-small" href="{{ current.url }}">Back to {{ current.label|lower }}</a>
+    </div>
+    {% if review.key == "learn" %}
+        <div class="grid" style="align-items:start">
+            <div class="span-2">{% include "partials/_tutorial.html" %}</div>
+            {% include "partials/_tutorial_side.html" %}
+        </div>
+    {% elif review.key == "done" %}
+        <section class="card" style="max-width:760px"><h2>Schedule</h2>
+            <p>Mastery: {% level_badge summary.mastery.level summary.mastery.decayed %}</p>
+            {% if summary.review %}<p class="secondary">Next spaced review on <strong>{{ summary.review.due|date:"l, M j" }}</strong>.</p>{% endif %}</section>
+    {% else %}
+        {% if worked %}
+            <section class="card" style="max-width:820px;margin-bottom:16px">
+                <div class="card-head"><h2>Worked example</h2><span class="badge">A fresh one, with every step</span></div>
+                <p class="q-stem">{{ worked.stem }}</p>
+                <ol class="steps">{% for st in worked.steps %}<li>{{ st.text }}</li>{% endfor %}</ol>
+                <p><strong>Answer: {{ worked.answer_label }}</strong></p>
+            </section>
+        {% endif %}
+        {% for a in answered %}
+            <section class="card review-item" style="max-width:820px">
+                <div class="card-head">
+                    <h3>{% if a.q.stage == "testout" %}Test-out question{% elif a.q.stage == "fade" %}Worked example, step {{ a.q.fade|add:1 }}{% elif a.q.stage == "try" %}Try {{ forloop.counter }}{% else %}Cold try{% endif %}</h3>
+                    {% if a.att.is_correct %}<span class="badge badge-good">Correct</span>{% else %}<span class="badge badge-bad">Missed{% if a.att.cause %} · {{ a.att.get_cause_display }}{% endif %}</span>{% endif %}
+                </div>
+                <p class="q-stem">{{ a.instance.stem }}</p>
+                <div class="choices">
+                    {% for c in a.instance.choices %}<div class="choice {% if not c.cause %}is-correct{% elif a.chosen == c.label %}is-wrong{% endif %}"><span class="letter">{{ forloop.counter0|letter }}</span><span>{{ c.label }}</span>{% if a.chosen == c.label %}<span class="why">your answer{% if c.cause %}: {{ c.note }}{% endif %}</span>{% endif %}</div>{% endfor %}
+                </div>
+                <details><summary class="small"><strong>Verified solution</strong></summary><ol class="steps" style="margin-top:8px">{% for st in a.instance.steps %}<li>{{ st.text }}</li>{% endfor %}</ol></details>
+            </section>
+        {% empty %}
+            <section class="card"><p class="empty">Nothing answered in this step yet.</p></section>
+        {% endfor %}
+    {% endif %}
+{% else %}
 
 {% if lp.stage == "done" %}
     <div class="grid grid-2">
@@ -82,5 +129,7 @@
         </div>
         {% include "partials/_refpanel.html" %}
     </div>
+{% endif %}
+{% if previous_step and previous_step.url %}<p style="margin-top:16px"><a class="btn btn-ghost btn-small" href="{{ previous_step.url }}">← Previous step: {{ previous_step.label }}</a></p>{% endif %}
 {% endif %}
 {% endblock %}

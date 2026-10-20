@@ -149,8 +149,8 @@ A frequent wrong answer is 600 ft, which uses the full L for a taper that only s
             "prompt": "A residential street posted at **25 mi/h** closes a **10-ft** lane. Find the merging taper, then the taper if instead the lanes only shifted 10 ft.",
             "steps": [
                 {"think": "Which formula at 25 mi/h?", "text": "25 ≤ 40, so L = WS² / 60 = 10 × 25² / 60 = 6,250 / 60 = **104.2 ft**."},
-                {"text": "Merging taper: at least L = **104 ft** (round up to a practical layout, such as 105 ft)."},
-                {"think": "And for a shift?", "text": "Shifting taper: at least L/2 = **52 ft**."},
+                {"text": "Merging taper: at least L = **104.2 ft** (round up to a practical layout, such as 105 ft)."},
+                {"think": "And for a shift?", "text": "Shifting taper: at least L/2 = **52.1 ft** (lay out 53 ft or more)."},
             ],
             "explanation": "At low speeds tapers are short, because S² / 60 shrinks quickly as S drops. At 25 mi/h the merging taper is under half of what the same closure needs at 40 mi/h (267 ft).",
             "widget": CLOSURE,

@@ -25,6 +25,7 @@ def shell(request):
         ("Exam simulation", "learning:simulation", "i-timer", None),
         ("References", "learning:references", "i-book", None),
         ("Reports", "reports:index", "i-chart", None),
+        ("Help", "learning:help", "i-help", None),
     ]
     items = []
     for label, name, icon, count in nav:

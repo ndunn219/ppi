@@ -41,7 +41,7 @@ Change the two areas and the spacing. Notice that the volume depends only on the
             "title": "Your first volume",
             "prompt": "Cut sections **50 ft** apart have end areas of **240 ft²** and **360 ft²**. What is the volume of cut between them, in cubic yards?",
             "answer": 555.6,
-            "tolerance": 0.2,
+            "tolerance": 0.5,
             "unit": "yd³",
             "hint": "Average the areas, multiply by the distance, then divide by 27.",
             "explanation": """
@@ -97,7 +97,7 @@ Each slip leaves its own number. The correct answer is **1,481.5 yd³**, and:
             "body": """
 For a run of stations, compute each segment and add them. Keep cut and fill separate: they are different materials headed in different directions.
 
-Where a cut runs out (the end area goes to zero), the solid between the sections is closer to a **pyramid** or wedge than a prism. Average end area then **overestimates**: a pyramid's volume is A·L/3, not A·L/2. Average end area is the usual method unless a question asks for the prismoidal formula or a pyramid correction, but knowing it overestimates helps you judge answer choices.
+Where a cut runs out (the end area goes to zero), the solid between the sections may be closer to a **pyramid** than a prism. If it tapers to a point, its volume is A·L/3, so average end area (A·L/2) **overestimates**. For a wedge that tapers to a line, average end area is exact. Average end area is the usual method unless a question asks for the prismoidal formula or a pyramid correction, but knowing it overestimates helps you judge answer choices.
 """,
         },
         {
@@ -124,7 +124,7 @@ The same soil takes up different space depending on its state:
 * **Loose**: dug and in a truck. It fluffs up, by the **swell**: loose = bank × (1 + swell).
 * **Compacted**: placed and rolled in a fill. It ends up denser than the bank, by the **shrinkage**: compacted = bank × (1 − shrinkage).
 
-So 1,000 bank yd³ with 25% swell fills trucks with 1,250 yd³, and with 15% shrinkage it makes 850 yd³ of compacted fill. Hauling is priced on loose volume, excavation and borrow on bank, and fill on compacted.
+So 1,000 bank yd³ with 25% swell fills trucks with 1,250 yd³, and with 15% shrinkage it makes 850 yd³ of compacted fill. In these problems, hauling is typically measured in loose volume, excavation and borrow in bank, and fill in compacted; actual pay bases vary by agency.
 """,
         },
         {
@@ -178,7 +178,7 @@ Set the usable cut, the fill needed and the factors. Watch the shortfall turn in
             "steps": [
                 {"think": "How much fill does the cut make?", "text": "20,000 × (1 − 0.20) = **16,000 compacted yd³**."},
                 {"text": "Compacted shortfall = 30,000 − 16,000 = **14,000 yd³**."},
-                {"think": "The borrow pit soil shrinks too. How much bank volume makes 14,000 compacted?", "text": "14,000 / (1 − 0.20) = **17,500 bank yd³** of borrow."},
+                {"think": "Assume the borrow material has the same 20% shrinkage. How much bank volume makes 14,000 compacted?", "text": "14,000 / (1 − 0.20) = **17,500 bank yd³** of borrow."},
                 {"text": "Loose for hauling: 17,500 × 1.25 = **21,875 yd³**. Loads: 21,875 / 14 = 1,562.5 → **1,563 loads**."},
             ],
             "explanation": "The three answers a question might want here are 14,000 (compacted shortfall), 17,500 (bank borrow) and 21,875 (loose haul). Read which state the question asks for: that choice is the whole problem.",
@@ -204,7 +204,7 @@ Match each number to its state:
 * **17,500 bank**: borrow dug from the pit.
 * 21,875 loose: what the trucks carry.
 
-Ignoring shrinkage (30,000 − 20,000 = 10,000) is the most common wrong answer.
+Ignoring shrinkage (30,000 − 20,000 = 10,000) is a common wrong answer.
 """,
             "widget": BALANCE,
             "config": {"values": {"Vc": 20000, "Vf": 30000, "s": 20, "w": 25}},

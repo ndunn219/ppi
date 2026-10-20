@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}Help{% endblock %}
+{% block page_title %}<h1>How to take this course</h1><p class="subtitle">What to do first, how each part works, and how your progress is measured.</p>{% endblock %}
+{% block content %}
+<div class="grid" style="align-items:start">
+<div class="span-2 help">
+
+<section class="card" id="start">
+    <h2>Start here</h2>
+    <ol class="steps">
+        <li><strong>Set your exam date and weekly hours</strong> in <a href="{% url 'learning:onboarding' %}">Exam settings</a>. The plan assumes about 13 weeks at 8 to 10 hours a week if you have not booked yet.</li>
+        <li><strong>Take the baseline diagnostic.</strong> About two questions per topic plus a short lookup test, timed at exam pace. Don't study for it: it measures where you start.</li>
+        <li><strong>Accept your plan.</strong> <a href="{% url 'learning:plan' %}">My plan</a> orders topics by exam weight times room to grow, so your hours go where the points are.</li>
+        <li><strong>Work through topics in plan order</strong> using the lesson loop, and do the <strong>daily warm-up</strong> every day you study.</li>
+        <li><strong>Follow "Up next"</strong> on the <a href="{% url 'learning:dashboard' %}">Overview</a>. It always names the single most useful thing to do.</li>
+    </ol>
+</section>
+
+<section class="card" id="phases">
+    <h2>The five phases</h2>
+    <p class="secondary">You move forward when you meet a gate, not on a date. A strong student can clear a gate early; if you miss one, the course points you at what's missing.</p>
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Phase</th><th>Typical timing</th><th>Gate to move on</th></tr></thead>
+        <tbody>{% for key, name, weeks, gate in phases %}<tr><td><strong>{{ forloop.counter }}. {{ name }}</strong></td><td>{{ weeks }}</td><td>{{ gate|default:"—" }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+</section>
+
+<section class="card" id="lesson-loop">
+    <h2>The lesson loop</h2>
+    <p class="secondary">Each topic is taught in the same five steps. Open it from <a href="{% url 'learning:topics' %}">Topics</a> or your plan. You never go more than about 10 minutes without solving something.</p>
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Step</th><th>What happens</th></tr></thead>
+        <tbody>{% for key, label, desc in loop %}<tr><td style="white-space:nowrap"><strong>{{ forloop.counter }}. {{ label }}</strong></td><td>{{ desc }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <ul class="steps" style="margin-top:12px">
+        <li><strong>Why a cold try?</strong> Attempting a problem before the lesson makes the lesson stick: you know what you're looking for. Getting it wrong is normal and costs nothing.</li>
+        <li><strong>Test out.</strong> If the cold try is right, you can test out with two more problems, solved correctly and on pace. Pass both and the topic goes straight to spaced review.</li>
+        <li><strong>Going back.</strong> The step pills at the top are links. Open any finished step to look at it again; your progress is kept, and a button takes you back to where you left off. The tutorial can be opened at any time, and each topic page also has a <em>Tutorial</em> button.</li>
+        <li><strong>The tutorial.</strong> About 30 minutes: short explanations, explorers you move with sliders, "Try it" questions, and worked examples you reveal one step at a time. Try each step on paper before you reveal it.</li>
+    </ul>
+</section>
+
+<section class="card" id="week">
+    <h2>A typical week</h2>
+    <p class="secondary">For about 9 hours a week, in the Build phase:</p>
+    <ul class="steps">
+        <li><strong>Every study day (10 to 15 min):</strong> the daily warm-up, then due flashcards.</li>
+        <li><strong>Two or three sessions (45 to 90 min):</strong> one topic's lesson loop, then a parametric drill on it.</li>
+        <li><strong>Once a week (60 min):</strong> a mixed timed block under exam rules.</li>
+        <li><strong>Whenever the error journal fills up:</strong> an error replay, plus the fix it suggests for your most common cause of misses.</li>
+    </ul>
+    <p class="note">In Strengthen, shift toward mixed timed blocks and lookup sprints. In Simulate, take two full simulations about a week apart.</p>
+</section>
+
+<section class="card" id="modes">
+    <h2>Practice modes</h2>
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Mode</th><th>What it trains</th><th>Length</th></tr></thead>
+        <tbody>
+        {% for group, items in modes %}
+            <tr><td colspan="3" class="muted small" style="font-weight:700;text-transform:uppercase;letter-spacing:.05em">{{ group }}</td></tr>
+            {% for kind, icon, tone, title, desc, length in items %}<tr><td><strong>{{ title }}</strong></td><td>{{ desc }}</td><td style="white-space:nowrap">{{ length }}</td></tr>{% endfor %}
+        {% endfor %}
+        </tbody>
+    </table></div>
+    <p class="note">Practice sessions give feedback after every answer. Timed blocks, half-exam sets, simulations and the diagnostic follow exam rules: no hints and no feedback until you submit.</p>
+</section>
+
+<section class="card" id="mastery">
+    <h2>How mastery is measured</h2>
+    <p class="secondary">Each topic has a level, earned only by solving problems with new numbers. Reading, the tutorial and flashcards help you learn but never raise a level by themselves.</p>
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Level</th><th>What it takes</th></tr></thead>
+        <tbody>
+            <tr><td>{% level_badge 0 %}</td><td>No attempts yet.</td></tr>
+            <tr><td>{% level_badge 1 %}</td><td>Lesson finished or at least one problem tried.</td></tr>
+            <tr><td>{% level_badge 2 %}</td><td>At least half right over your last 4 or more problems.</td></tr>
+            <tr><td>{% level_badge 3 %}</td><td>At least 80% right over your last 5, on 2 or more different days, with at most one hint.</td></tr>
+            <tr><td>{% level_badge 4 %}</td><td>Proficient, plus on pace (about {{ course.PACE_TARGET_MINUTES|floatformat:0 }} minutes a question), using the right reference, and still right a week or more later.</td></tr>
+        </tbody>
+    </table></div>
+    <ul class="steps" style="margin-top:12px">
+        <li><strong>Hints cost half.</strong> A problem solved after showing a hint counts as half an attempt.</li>
+        <li><strong>Levels can drop.</strong> If a topic's spaced review is overdue, it shows one level lower (in italics) until you review it.</li>
+        <li><strong>"Reference used".</strong> Choosing the reference you used on a problem is optional, but it is how the course measures lookup skill for Exam-ready.</li>
+    </ul>
+</section>
+
+<section class="card" id="review">
+    <h2>Spaced review and flashcards</h2>
+    <p class="secondary">A topic you get right comes back after 1, 3, 7, 14 and then 30 days, each time with new numbers. A miss sends it back to tomorrow. Cramming doesn't skip ahead: a correct answer only moves a topic along when its review was due.</p>
+    <p class="secondary">Flashcards work the same way. After you flip a card, grade yourself honestly: <strong>Again</strong> if you didn't know it, <strong>Hard</strong> if it took effort, <strong>Good</strong> if you knew it, <strong>Easy</strong> if it was instant. Keyboard: space to flip, then 1 to 4.</p>
+    <p class="note">Cards ask when a method applies, what its variables mean and where it lives in the references. They never ask you to memorize values the exam supplies.</p>
+</section>
+
+<section class="card" id="errors">
+    <h2>Fixing your mistakes</h2>
+    <ul class="steps">
+        <li><strong>Every miss gets a cause:</strong> concept, method choice, wrong lookup, setup, arithmetic, units or misreading. The wrong answers are built from those mistakes, so the course knows which one you made.</li>
+        <li><strong>"Fix it"</strong> appears under each miss with the practice mode for that cause.</li>
+        <li><strong>Error replay</strong> brings back each missed problem type, with new numbers, until you solve it twice.</li>
+        <li><strong>Audit your work.</strong> Upload a photo of your scratch work and the AI tutor compares it line by line with the verified solution (when the tutor is turned on). Otherwise, use the self-audit checklist, and correct the cause if you think it's wrong.</li>
+    </ul>
+</section>
+
+<section class="card" id="exam">
+    <h2>Exam simulations and references</h2>
+    <ul class="steps">
+        <li>Use an NCEES-approved calculator, and work on a whiteboard or laminated sheet, as on exam day.</li>
+        <li>The real exam gives you the NCEES Handbook and the design standards as searchable PDFs, one open at a time. Here, open your own copy with <strong>Open my PDF</strong> in the reference panel. It is shown in your browser and never uploaded.</li>
+        <li>The MUTCD is public domain, so the course links to it directly. For other standards it tells you where to look (chapter or part and search terms) but never shows their text.</li>
+        <li>The clock keeps running if you leave the page, and the session submits itself when time is up.</li>
+    </ul>
+</section>
+
+<section class="card" id="readiness">
+    <h2>The readiness estimate</h2>
+    <p class="secondary">A likely range for your exam score, built from the problems you've solved here, weighted toward recent work and by each area's share of the exam. Full simulations count for more as you take them.</p>
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Zone</th><th>Means</th></tr></thead>
+        <tbody>
+            <tr><td><span class="zone zone-none">No zone yet</span></td><td>Finish the diagnostic and study at least {{ course.MIN_COVERAGE_FOR_ZONE|pct }} of exam weight first.</td></tr>
+            <tr><td><span class="zone zone-not_yet">Not yet</span></td><td>Less than 40% of exam weight at Practicing or above.</td></tr>
+            <tr><td><span class="zone zone-building">Building</span></td><td>The likely range sits below the target line.</td></tr>
+            <tr><td><span class="zone zone-approaching">Approaching</span></td><td>The range overlaps the target, or you need more full simulations.</td></tr>
+            <tr><td><span class="zone zone-ready">Ready</span></td><td>The whole range is above the target, two full simulations at the target in the last 3 weeks, and your pace is on target.</td></tr>
+        </tbody>
+    </table></div>
+    <p class="note">The target line of {{ course.WORKING_TARGET|pct }} is a working assumption: NCEES does not publish a fixed passing percentage. Treat the estimate as a guesstimate, not a prediction or a guarantee.</p>
+</section>
+
+<section class="card" id="reports">
+    <h2>Reports and sharing</h2>
+    <p class="secondary"><a href="{% url 'reports:index' %}">Reports</a> has three: readiness, weekly progress, and one for each timed session. Each can be printed or saved as PDF, or shared as a link with an employer, a supervising PE or a study partner.</p>
+    <ul class="steps">
+        <li>You choose what a shared report includes and how long the link lasts (7, 30 or 90 days).</li>
+        <li>A <strong>snapshot</strong> link shows the report as it was when you shared it. A <strong>live</strong> link (readiness only) always shows current data.</li>
+        <li>You can revoke a link at any time, and see how many times it was opened.</li>
+        <li>Reports show only work done in the course, with hints marked.</li>
+    </ul>
+</section>
+
+<section class="card" id="faq">
+    <h2>Questions</h2>
+    <dl class="faq">
+        <dt>Do the questions inside tutorials count?</dt><dd>No. They are for learning. They're saved, but only problems in the lesson loop and practice modes count toward mastery.</dd>
+        <dt>Why did a topic's level go down?</dt><dd>Its spaced review is overdue. Do the daily warm-up and it comes back once you answer it.</dd>
+        <dt>Can I skip a topic I already know?</dt><dd>Yes: get the cold try right and choose "test out".</dd>
+        <dt>Is the content checked by a licensed PE?</dt><dd>Not yet. Every lesson and problem carries a review flag that a reviewer sets in the admin; until then, treat the content as unreviewed.</dd>
+        <dt>Where do I find something in the references?</dt><dd>Each topic page and tutorial lists where it lives and the search terms that find it fastest. <a href="{% url 'learning:references' %}">References</a> has the full list.</dd>
+    </dl>
+</section>
+
+</div>
+<aside class="card help-toc" style="position:sticky;top:16px">
+    <h2>On this page</h2>
+    <ul class="nav-links" style="margin:0;padding-left:0;border:0">
+        <li><a href="#start">Start here</a></li>
+        <li><a href="#phases">The five phases</a></li>
+        <li><a href="#lesson-loop">The lesson loop</a></li>
+        <li><a href="#week">A typical week</a></li>
+        <li><a href="#modes">Practice modes</a></li>
+        <li><a href="#mastery">How mastery is measured</a></li>
+        <li><a href="#review">Spaced review and flashcards</a></li>
+        <li><a href="#errors">Fixing your mistakes</a></li>
+        <li><a href="#exam">Exam simulations and references</a></li>
+        <li><a href="#readiness">The readiness estimate</a></li>
+        <li><a href="#reports">Reports and sharing</a></li>
+        <li><a href="#faq">Questions</a></li>
+    </ul>
+</aside>
+</div>
+{% endblock %}

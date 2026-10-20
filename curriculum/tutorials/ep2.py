@@ -24,7 +24,7 @@ The **structural number (SN)** expresses how much load-spreading strength the la
 
 * **D** is each layer's thickness, in **inches**.
 * **a** is the layer coefficient: how strong one inch of that material is. Asphalt is strongest per inch.
-* **m** is the drainage coefficient for the base and subbase. Good drainage gives m above 1, and poor drainage, which leaves the layer wet longer, gives m below 1. The asphalt surface has no m.
+* **m** is the drainage coefficient for the base and subbase. It depends on drainage quality and how often the layer is near saturation: good drainage with little exposure gives m above 1, and poor drainage or frequent saturation gives m below 1. The asphalt surface has no m.
 """,
         },
         {
@@ -167,7 +167,7 @@ Using the rounded, actual contributions at each step stops rounding errors from 
                 {"think": "What must the subbase add to reach SN₃?", "text": "D₃ = (4.9 − 2.64 − 1.19) / (0.11 × 1.0) = 9.73 → **10.0 in**. Actual SN₃* = 0.11 × 10 = **1.10**."},
                 {"text": "Total SN = 2.64 + 1.19 + 1.10 = **4.93 ≥ 4.9**. Section: 6.0 in asphalt, 8.5 in base, 10.0 in subbase."},
             ],
-            "explanation": "Each step uses the *rounded* thickness above it. Had you used the unrounded 5.91 in of asphalt, the base and subbase would come out slightly thicker than needed, or thinner if you rounded down.",
+            "explanation": "Each step uses the *rounded* thickness above it. Using the unrounded 5.91 in would credit the asphalt with 2.60 instead of 2.64, making the base thicker than needed (9.0 in instead of 8.5 in).",
             "widget": SECTION,
             "config": {"values": {"D1": 6, "a1": 0.44, "D2": 8.5, "a2": 0.14, "m2": 1.0, "D3": 10, "a3": 0.11, "m3": 1.0, "SNreq": 4.9}},
         },

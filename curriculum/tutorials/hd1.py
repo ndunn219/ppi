@@ -140,7 +140,7 @@ The tangent from the PI to the PT is not part of the road, so it adds nothing to
             "prompt": "The PI is at 45+20.00, R = 900 ft and Δ = 48°, so T = 400.71 ft and L = 753.98 ft. A student reports the PT at **49+20.71**. What went wrong?",
             "choices": [
                 {"label": "They added T to the PI instead of L to the PC", "correct": True, "why": "45+20.00 + 400.71 = 49+20.71. The road never runs along the forward tangent from the PI, so this station is wrong by 2T − L = 47.43 ft."},
-                {"label": "They used tan(Δ) instead of tan(Δ/2)", "correct": False, "why": "That would make T = 900 × tan 48° = 999.56 ft and the PT far beyond 49+20.71."},
+                {"label": "They used tan(Δ) instead of tan(Δ/2)", "correct": False, "why": "That would make T = 900 × tan 48° = 999.55 ft, giving a PT of 42+74.43 (or 55+19.55 as PI + T), not 49+20.71."},
                 {"label": "They forgot to subtract T for the PC", "correct": False, "why": "Then PT = 45+20.00 + 753.98 = 52+73.98, not 49+20.71."},
                 {"label": "Nothing: that is the PT", "correct": False, "why": "The correct PT is 41+19.29 + 753.98 = 48+73.28."},
             ],
@@ -206,7 +206,7 @@ Some problems give the curve's sharpness as a **degree of curve D** instead of a
 So a 5° curve turns 5° for every 100 ft of arc. Doubling D to 10° halves the radius.
 """,
             "widget": DEGREE,
-            "config": {"values": {"R": 1146, "delta": 30}},
+            "config": {"values": {"R": 1145.92, "delta": 30}},
         },
         {
             "kind": "example",

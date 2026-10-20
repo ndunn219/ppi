@@ -41,7 +41,7 @@ Change the speed, the reaction time and the grade. The amber part is reaction di
             "title": "Reaction distance",
             "prompt": "At **50 mi/h** with a brake reaction time of **2.5 s**, how far does the car travel before the brakes are applied, in feet?",
             "answer": 183.75,
-            "tolerance": 0.1,
+            "tolerance": 0.26,
             "unit": "ft",
             "hint": "1.47 converts mi/h to ft/s. Distance = speed × time.",
             "explanation": """
@@ -61,7 +61,7 @@ That is more than half a football field travelled before braking even starts.
             "answer": 239.6,
             "tolerance": 0.06,
             "unit": "ft",
-            "hint": "a / 32.2 = 0.348. On level ground G = 0.",
+            "hint": "a / 32.2 = 0.3478. On level ground G = 0.",
             "explanation": """
 ::
 
@@ -140,7 +140,7 @@ On a grade, gravity helps or hurts braking:
 
 Only the braking term changes. The reaction distance is the same, because the car is still at full speed during reaction.
 
-On a two-way road both directions use the same pavement. The downhill direction needs the longer SSD, so it usually governs the design.
+Each direction must provide its own SSD. The downhill direction needs more, so check it against the sight distance actually available in that direction.
 """,
         },
         {
@@ -183,7 +183,7 @@ The correct SSD is 610 ft. Fingerprints of the usual slips:
 Wrong answers that land near the right one are the dangerous ones. Writing "downhill → subtract" beside the formula prevents the first.
 """,
             "widget": BARS,
-            "config": {"values": {"V": 60, "t": 2.5, "G": 4}},
+            "config": {"values": {"V": 60, "t": 2.5, "G": -4}},
         },
         {
             "kind": "example",
@@ -201,15 +201,15 @@ Wrong answers that land near the right one are the dangerous ones. Writing "down
         },
         {
             "kind": "example",
-            "title": "Which direction governs? (stretch)",
-            "prompt": "A two-lane highway runs on a **5% grade** with a design speed of **65 mi/h**. Find the SSD for each direction and say which one the design must provide.",
+            "title": "Both directions on a grade (stretch)",
+            "prompt": "A two-lane highway runs on a **5% grade** with a design speed of **65 mi/h**. Find the SSD for each direction and say what the design must provide.",
             "steps": [
                 {"text": "Reaction (same both ways) = 1.47 × 65 × 2.5 = **238.9 ft**."},
                 {"think": "Downhill: is G added or subtracted?", "text": "Subtracted: 0.3478 − 0.05 = 0.2978. Braking = 4,225 / (30 × 0.2978) = 4,225 / 8.935 = **472.9 ft**. SSD = **711.7 ft**."},
                 {"text": "Uphill: 0.3478 + 0.05 = 0.3978. Braking = 4,225 / 11.935 = **354.0 ft**. SSD = **592.9 ft**."},
-                {"think": "Which one controls the design?", "text": "The **downhill** direction, at about **712 ft**, because both directions share the road and the longer requirement governs."},
+                {"think": "What must the design provide?", "text": "Each direction must provide its own SSD: about **712 ft** downhill and **593 ft** uphill. Check each against the sight distance actually available in that direction."},
             ],
-            "explanation": "The two directions differ by about 119 ft on the same pavement. On divided highways each direction can be designed separately; on a two-lane road the downhill SSD controls.",
+            "explanation": "The two directions differ by about 119 ft. On a two-lane road the downhill direction often already has more sight distance available, which partly offsets its longer requirement; grade corrections matter most where each direction has its own profile, as on divided highways.",
             "widget": BARS,
             "config": {"values": {"V": 65, "t": 2.5, "G": -5}},
         },

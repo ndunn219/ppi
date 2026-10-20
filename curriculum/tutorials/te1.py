@@ -64,7 +64,7 @@ Multiply by k and flow becomes a parabola in density:
 
     q = v_f × k × (1 − k / k_j)
 
-Flow is zero at both ends: no vehicles, or vehicles that can't move. In between it peaks at **capacity**. Greenshields is a simplification, and real speed-density data curve, but it captures the shape and is the model exam questions use.
+Flow is zero at both ends: no vehicles, or vehicles that can't move. In between it peaks at **capacity**. Greenshields is a simplification, and real speed-density data curve, but it captures the shape and is the model most textbook and exam problems use.
 """,
         },
         {

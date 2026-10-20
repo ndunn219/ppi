@@ -84,7 +84,7 @@ About 0.4 s longer than on level ground. The sign convention is the whole trick:
         {
             "kind": "check",
             "title": "Speed and grade together",
-            "prompt": "An approach has a speed of **45 mi/h** on a **3% downgrade**. Using t = 1.0 s and a = 10 ft/s², what yellow interval is needed, in seconds? Give two decimal places.",
+            "prompt": "An approach has a speed of **45 mi/h** on a **3% downgrade**. Using t = 1.0 s, a = 10 ft/s² and 1.47 to convert mi/h to ft/s, what yellow interval is needed, in seconds? Give two decimal places.",
             "answer": 4.66,
             "tolerance": 0.006,
             "unit": "s",
@@ -96,7 +96,7 @@ About 0.4 s longer than on level ground. The sign convention is the whole trick:
     2a + 2Gg = 20 + 2(−0.03)(32.2) = 20 − 1.932 = 18.068 ft/s²
     Y = 1.0 + 66.15 / 18.068 = 1.0 + 3.661 = 4.66 s
 
-Agencies usually round up to the next 0.1 s, so this would be posted as 4.7 s.
+Many agencies round up to the next 0.1 s, so this would be posted as 4.7 s.
 """,
             "widget": YELLOW,
             "config": {"values": {"V": 45, "G": -3, "t": 1}},
@@ -194,7 +194,7 @@ Each slip has a fingerprint:
 * Divided only the 5: **30.5 s**.
 * Correct: **57.5 s**.
 
-A useful check: C₀ must be longer than L divided by (1 − Y), which is the time needed just to cover the lost time. Here that is 30 s.
+A useful check: C₀ must exceed the minimum cycle L / (1 − Y), the shortest cycle that clears the critical flows. Here that is 30 s.
 """,
         },
         {
@@ -208,7 +208,7 @@ A useful check: C₀ must be longer than L divided by (1 − Y), which is the ti
                 {"think": "How much of the cycle is effective green?", "text": "Effective green = C₀ − L = 57.5 − 12 = **45.5 s**."},
                 {"text": "Split in proportion to y: phase 1 gets 45.5 × 0.25/0.60 = **19.0 s**, phase 2 gets 45.5 × 0.20/0.60 = **15.2 s**, phase 3 gets 45.5 × 0.15/0.60 = **11.4 s**."},
             ],
-            "explanation": "The three greens add to 45.5 s, and with 12 s of lost time make the 57.5-s cycle. Giving each phase green in proportion to its flow ratio equalizes how saturated the phases are.",
+            "explanation": "The three greens add to 45.5 s before rounding, and with 12 s of lost time make the 57.5-s cycle. Giving each phase green in proportion to its flow ratio equalizes how saturated the phases are.",
             "widget": WEBSTER,
             "config": {"values": {"L": 12, "Y": 0.6}},
         },

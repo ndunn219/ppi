@@ -131,7 +131,7 @@ If the problem gives two-way ADTs on the cross streets instead of entering volum
                 {"label": "They used 10⁶ instead of 10⁸", "correct": True, "why": "30 × 10⁶ / 21,900,000 = 1.37. That is the intersection multiplier; segments use 100 million vehicle-miles."},
                 {"label": "They left out the segment length", "correct": False, "why": "Without L the rate doubles to 274.0, not 1.37."},
                 {"label": "They forgot the 365", "correct": False, "why": "Without 365 the rate becomes enormous (about 50,000), not 1.37."},
-                {"label": "They used the number of years in the numerator", "correct": False, "why": "That would give 3 × 137 = 411, not 1.37."},
+                {"label": "They left out the number of years", "correct": False, "why": "Without N the rate is 411, three times too big."},
             ],
             "explanation": """
 The correct rate is 137.0 per 100 MVMT. Fingerprints of common slips:

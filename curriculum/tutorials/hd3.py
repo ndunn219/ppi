@@ -112,7 +112,7 @@ A 552-ft offset on a 1,000-ft curve is absurd: it is over half the radius. That 
 Two equivalent ways to avoid the trap:
 
 * Degree mode: M = R(1 − cos(28.65 S/R)).
-* Radian mode: M = R(1 − cos(S / 2R)), since S/(2R) = 0.2 rad gives the same 19.94 ft.
+* Radian mode: M = R(1 − cos(S / 2R)), since S/(2R) = 0.2 rad gives 19.93 ft, the same to rounding.
 """,
         },
         {
@@ -154,7 +154,7 @@ Questions often give a wall's distance from the edge of pavement. Convert to the
                 {"think": "Now reverse the formula: given M = 22 ft, solve for S.", "text": "cos(28.65 S / R) = (R − M) / R = 778 / 800 = 0.9725, so the half-angle = 13.47°."},
                 {"text": "S = 13.47 × 800 / 28.65 = **376 ft**."},
             ],
-            "explanation": "The building allows only about 376 ft of sight distance, 49 ft short. Options include removing or relocating the obstruction, flattening the curve, or a lower design speed with warning signs.",
+            "explanation": "The building allows only about 376 ft of sight distance, 49 ft short. Options include removing or relocating the obstruction, flattening the curve, or a lower posted or advisory speed with warning signs.",
             "widget": SIGHT,
             "config": {"values": {"R": 800, "S": 425, "C": 22}},
         },
@@ -189,7 +189,7 @@ The wall would need to move back about 2.8 ft.
                 {"text": "S = 12.84 × 1,200 / 28.65 = **538 ft**."},
                 {"text": "538 ft ≥ 492 ft (55 mi/h) but < 566 ft (60 mi/h). The curve supports **55 mi/h**."},
             ],
-            "explanation": "Working the other way confirms it: 55 mi/h needs M = 25.13 ft (under 30, clear), while 60 mi/h needs M = 33.16 ft (over 30, blocked).",
+            "explanation": "Working the other way confirms it: 55 mi/h needs M = 25.13 ft (under 30, clear), while 60 mi/h needs M = 33.22 ft (over 30, blocked).",
             "widget": SIGHT,
             "config": {"values": {"R": 1200, "S": 492, "C": 30}},
         },
@@ -211,7 +211,7 @@ The wall would need to move back about 2.8 ft.
 This reversed form is the one to use for existing obstructions: it turns an offset into an available sight distance you can compare with what a design speed needs.
 """,
             "widget": SIGHT,
-            "config": {"values": {"R": 1200, "S": 525, "C": 30}},
+            "config": {"values": {"R": 1200, "S": 538, "C": 30}},
         },
         {
             "kind": "text",

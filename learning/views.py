@@ -243,3 +243,16 @@ def simulation(request):
     )
     rows = [{"s": s, "score": readiness.session_score(s) if s.finished_at else None} for s in sims]
     return render(request, "learning/simulation.html", {"rows": rows})
+
+
+@login_required
+def help_page(request):
+    from django.conf import settings
+
+    from learning.views_practice import LOOP, MODES
+
+    return render(
+        request,
+        "learning/help.html",
+        {"loop": LOOP, "modes": MODES, "course": settings.COURSE, "phases": readiness.PHASES},
+    )

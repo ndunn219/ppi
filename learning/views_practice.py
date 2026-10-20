@@ -221,7 +221,14 @@ def results(request, pk):
 # --- The lesson loop ----------------------------------------------------------
 
 Stage = LessonProgress.Stage
-LOOP = [(Stage.PRIME, "Prime"), (Stage.LEARN, "Learn"), (Stage.FADE, "Worked example"), (Stage.TRY, "Try"), (Stage.DONE, "Schedule")]
+LOOP = [
+    (Stage.PRIME, "Cold try", "One problem before any teaching. A miss is expected: it shows what the lesson is for."),
+    (Stage.LEARN, "Tutorial", "The interactive tutorial: explanation, explorers, questions and worked examples."),
+    (Stage.FADE, "Worked example", "A full solution, then the same kind of problem with more of the steps left to you."),
+    (Stage.TRY, "Try it yourself", "Three problems with new numbers and no hints."),
+    (Stage.DONE, "Schedule", "The topic joins spaced review, with your flashcards."),
+]
+LOOP_ORDER = [key for key, _, _ in LOOP]
 TRY_COUNT = 3
 TESTOUT_COUNT = 2
 
@@ -252,8 +259,19 @@ def study(request, code):
     if session and lp.stage == Stage.FADE and lp.fade_level > 0 and not [q for q in session.items if q.get("fade") == lp.fade_level]:
         add_problem(session, item, "fade", fade=lp.fade_level)
 
-    ctx = {"item": item, "lp": lp, "session": session, "loop": LOOP, "references": Reference.objects.all()}
-    ctx["loop_state"] = loop_state(lp)
+    ctx = {"item": item, "lp": lp, "session": session, "references": Reference.objects.all()}
+    review = request.GET.get("step")
+    steps = loop_state(lp, item, review)
+    ctx["loop_state"] = steps
+    current_key = current_step(lp)
+    position_now = LOOP_ORDER.index(current_key)
+    ctx["previous_step"] = steps[position_now - 1] if position_now > 0 else None
+    allowed = {s["key"] for s in steps if s["url"]}
+    if review and review != current_key and review in allowed:
+        ctx["review"] = next(s for s in steps if s["key"] == review)
+        ctx["current"] = steps[position_now]
+        ctx.update(review_context(request.user, item, lp, review))
+        return render(request, "learning/study.html", ctx)
     if lp.stage == Stage.DONE:
         ctx["summary"] = lesson_summary(request.user, item)
     elif lp.stage == Stage.LEARN:
@@ -277,11 +295,44 @@ def study(request, code):
     return render(request, "learning/study.html", ctx)
 
 
-def loop_state(lp):
-    order = [s for s, _ in LOOP]
-    stage = Stage.PRIME if lp.stage == Stage.TESTOUT else lp.stage
-    idx = order.index(stage)
-    return [{"label": label, "state": "done" if i < idx else ("current" if i == idx else "")} for i, (_, label) in enumerate(LOOP)]
+def current_step(lp):
+    return Stage.PRIME if lp.stage == Stage.TESTOUT else lp.stage
+
+
+def loop_state(lp, item, viewing=None):
+    """The step pills. Finished steps and the current one can be opened;
+    the tutorial can always be opened; later steps unlock in order."""
+    idx = LOOP_ORDER.index(current_step(lp))
+    base = reverse("learning:study", args=[item.code])
+    out = []
+    for i, (key, label, desc) in enumerate(LOOP):
+        state = "done" if i < idx else ("current" if i == idx else "")
+        open_ = i <= idx or key == Stage.LEARN
+        url = (base if i == idx else f"{base}?step={key}") if open_ else None
+        shown = viewing == key if viewing in LOOP_ORDER else i == idx
+        out.append({"key": key, "label": label, "desc": desc, "state": state, "url": url, "viewing": shown, "number": i + 1})
+    return out
+
+
+def review_context(user, item, lp, step):
+    """A finished step, shown again without changing progress."""
+    if step == Stage.LEARN:
+        return tutorial_context(item)
+    if step == Stage.DONE:
+        return {"summary": lesson_summary(user, item)}
+    session = PracticeSession.objects.filter(student=user, kind=Kind.LESSON, spec_item=item).first()
+    stages = {Stage.PRIME: ("prime", "testout"), Stage.FADE: ("fade",), Stage.TRY: ("try",)}[step]
+    answered = []
+    if session:
+        attempts = {a.position: a for a in session.attempts.select_related("instance__template")}
+        for pos, q in enumerate(session.items):
+            if q.get("stage") in stages and pos in attempts:
+                att = attempts[pos]
+                answered.append({"q": q, "att": att, "instance": att.instance, "chosen": att.response})
+    ctx = {"answered": answered}
+    if step == Stage.FADE:
+        ctx["worked"] = sessions.new_instance(random.choice(sessions.active_templates([item])))
+    return ctx
 
 
 @require_POST

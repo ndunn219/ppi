@@ -151,7 +151,7 @@ When the radius is fixed (by terrain or right of way), the question becomes: how
 
 Friction is **subtracted** because it already supplies part of the force. The slope only has to provide the rest. If the result exceeds e_max, the curve can't be built for that speed: lower the speed or flatten the curve.
 
-If the result is negative, the curve is so gentle that friction alone is enough. Normal cross slope (crown) is then used, subject to the agency's rules.
+This is the **minimum** e, with friction at its design limit. Agencies' superelevation distribution tables usually assign more than this minimum, so drivers use less friction. If the result is negative, friction alone could hold the curve; whether normal cross slope (crown) is kept then depends on the agency's distribution table.
 """,
         },
         {
@@ -171,7 +171,7 @@ If the result is negative, the curve is so gentle that friction alone is enough.
 If you got 0.343, you added f instead of subtracting it.
 """,
             "widget": BANK,
-            "config": {"values": {"V": 45, "R": 700, "e": 0.04}},
+            "config": {"values": {"V": 45, "R": 700, "e": 0.043}},
         },
         {
             "kind": "example",
@@ -180,11 +180,11 @@ If you got 0.343, you added f instead of subtracting it.
             "steps": [
                 {"think": "What is the demand, V²/(15R)?", "text": "55² / (15 × 1,100) = 3,025 / 16,500 = **0.1833**."},
                 {"text": "e = 0.1833 − 0.13 = **0.0533 ft/ft**, about 5.3%."},
-                {"text": "0.053 ≤ 0.08, so the curve works. A designer would round up to the next standard rate the agency uses."},
+                {"text": "0.053 ≤ 0.08, so the curve works. This is the minimum e with friction at its design limit; the agency's superelevation distribution table usually assigns somewhat more."},
             ],
             "explanation": "In the figure, the green part of the supply bar is the 0.053 from the slope and the amber part is the 0.13 from friction, together matching the 0.183 demand.",
             "widget": BANK,
-            "config": {"values": {"V": 55, "R": 1100, "e": 0.05}},
+            "config": {"values": {"V": 55, "R": 1100, "e": 0.0533}},
         },
         {
             "kind": "explorer",
@@ -202,7 +202,7 @@ If you got 0.343, you added f instead of subtracting it.
                 {"text": "At 50 mi/h: e = 2,500 / 13,500 − 0.14 = 0.1852 − 0.14 = **0.045**. Within 0.08: works."},
                 {"text": "The highest design speed is **50 mi/h**. (Solving with f = 0.13 fixed would give about 53 mi/h, which isn't a design speed step.)"},
             ],
-            "explanation": "This trial approach is how speed-limit and design-exception studies treat existing curves: the friction value moves with the speed being tested.",
+            "explanation": "This trial approach checks an existing curve against design criteria: the friction value moves with the speed being tested.",
             "widget": BANK,
             "config": {"values": {"V": 55, "R": 900, "e": 0.08}},
         },

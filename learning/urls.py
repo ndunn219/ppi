@@ -29,4 +29,5 @@ urlpatterns = [
     path("attempt/<int:pk>/audit/", practice.audit, name="audit"),
     path("simulation/", views.simulation, name="simulation"),
     path("references/", views.references, name="references"),
+    path("help/", views.help_page, name="help"),
 ]
