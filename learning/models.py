@@ -19,6 +19,9 @@ class StudentProfile(models.Model):
     exam_date = models.DateField(null=True, blank=True)
     hours_per_week = models.PositiveSmallIntegerField(default=9)
     plan_accepted_at = models.DateTimeField(null=True, blank=True)
+    plan = models.JSONField(
+        default=dict, blank=True, help_text="The saved schedule: start date and a target week for each topic (learning.planning)."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

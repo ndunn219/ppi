@@ -528,3 +528,9 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 .faq dt:first-child { margin-top: 0; }
 .faq dd { margin: 4px 0 0; color: var(--text-2); }
 .help-toc .nav-links a { padding: 4px 0; font-size: 14px; }
+
+/* Plan pacing */
+.plan-status { margin-bottom: 16px; border-left: 4px solid var(--good); }
+.plan-status.is-behind { border-left-color: var(--bad); }
+.plan-status.is-good h2 { color: var(--good); }
+.plan-status.is-behind h2 { color: var(--bad); }

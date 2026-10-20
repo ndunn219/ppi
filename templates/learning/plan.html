@@ -1,41 +1,102 @@
 {% extends "base.html" %}
 {% load course %}
 {% block title %}My plan{% endblock %}
-{% block page_title %}<h1>Your personal plan</h1><p class="subtitle">Topics ordered by what studying them would add: exam weight times room to grow. {{ weeks }} week{{ weeks|pluralize }} at {{ profile.hours_per_week }} h/week is about {{ total_hours }} hours; about {{ study_hours }} go to topics, the rest to simulations and review.</p>{% endblock %}
+{% block page_title %}
+    <h1>Your personal plan</h1>
+    <p class="subtitle">Topics ordered by what studying them would add: exam weight times room to grow. {{ weeks }} week{{ weeks|pluralize }} left at {{ profile.hours_per_week }} h/week is about {{ total_hours }} hours; about {{ study_hours }} go to topics, the rest to simulations and review.</p>
+{% endblock %}
 {% block page_actions %}
-    <a class="btn" href="{% url 'learning:onboarding' %}">Exam settings</a>
-    {% if est.diagnostic_done and not profile.plan_accepted_at %}
+    {% if est.diagnostic_done and not saved %}
         <form method="post" action="{% url 'learning:accept_plan' %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Accept plan</button></form>
+    {% elif saved %}
+        <form method="post" action="{% url 'learning:replan' %}">{% csrf_token %}<button class="btn" type="submit" data-confirm="Rebuild the schedule from today? Your mastery, answers and reviews are kept; only the target weeks change.">Re-plan from today</button></form>
     {% endif %}
 {% endblock %}
 {% block content %}
 {% if not est.diagnostic_done %}
     <div class="card" style="margin-bottom:16px">
         <h2>Take the baseline first</h2>
-        <p class="secondary">Without a baseline every topic looks the same. The diagnostic takes about {{ rows|length|times:2|floatformat:0 }} questions plus a short lookup test.</p>
+        <p class="secondary">Without a baseline every topic looks the same. The diagnostic takes about two questions per topic plus a short lookup test.</p>
         <form method="post" action="{% url 'learning:start' %}">{% csrf_token %}<input type="hidden" name="kind" value="diagnostic"><button class="btn btn-primary" type="submit">Start diagnostic</button></form>
     </div>
-{% elif profile.plan_accepted_at %}
-    <ul class="messages"><li>Accepted on {{ profile.plan_accepted_at|date:"M j" }}. The order updates as you practice.</li></ul>
 {% endif %}
-<section class="card">
-    <div class="table-wrap"><table class="table">
-        <thead><tr><th>#</th><th>Topic</th><th>Area</th><th class="r">Exam weight</th><th>Estimated accuracy</th><th>Mastery</th><th class="r">Suggested hours</th><th></th></tr></thead>
-        <tbody>
-        {% for row in rows %}
-            <tr>
-                <td class="muted">{{ row.rank }}</td>
-                <td><a href="{% url 'learning:topic' row.e.item.code %}">{{ row.e.item.name }}</a></td>
-                <td class="secondary">{{ row.e.item.area.name }}</td>
-                <td class="r">{{ row.e.weight|pct:1 }}</td>
-                <td><div class="bar-row" style="grid-template-columns:1fr 3rem;padding:0"><div class="bar{% if row.e.p < 0.5 %} amber{% endif %}"><i style="width:{{ row.e.p|times:100 }}%"></i></div><span class="r small">{{ row.e.p|pct }}</span></div></td>
-                <td>{% level_badge row.e.level %}</td>
-                <td class="r">{{ row.hours }}</td>
-                <td class="r"><a class="btn btn-small" href="{% url 'learning:study' row.e.item.code %}">Study</a></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table></div>
-    <p class="note">Estimated accuracy blends your answers on each topic with your overall average, weighting recent work most. Unstudied topics start at 25%, the rate of guessing.</p>
-</section>
+
+<div class="grid" style="align-items:start">
+<div class="span-2">
+{% if saved %}
+    <section class="card plan-status {% if saved.on_track %}is-good{% else %}is-behind{% endif %}">
+        <div class="card-head">
+            <h2>{% if saved.on_track %}On track{% else %}Behind by {{ saved.overdue }} topic{{ saved.overdue|pluralize }}{% endif %}</h2>
+            <span class="muted small">Week {{ saved.week_now }} of the plan {% if saved.reason == "replanned" %}re-planned{% elif saved.reason == "settings" %}rebuilt{% else %}started{% endif %} {{ saved.start|date:"M j" }}</span>
+        </div>
+        {% if saved.on_track %}
+            <p class="secondary">{{ saved.done }} of {{ saved.rows|length }} topics done. Keep working down the list.</p>
+        {% else %}
+            <p class="secondary">{{ saved.overdue }} topic{{ saved.overdue|pluralize:" is,s are" }} past {{ saved.overdue|pluralize:"its,their" }} target week. You can catch up, change your exam date or weekly hours (the plan rebuilds to fit), or re-plan from today to spread what's left over the time you have.</p>
+            <form method="post" action="{% url 'learning:replan' %}">{% csrf_token %}<button class="btn btn-primary btn-small" data-confirm="Rebuild the schedule from today? Your mastery, answers and reviews are kept; only the target weeks change.">Re-plan from today</button></form>
+        {% endif %}
+    </section>
+    <section class="card">
+        <div class="card-head"><h2>Your schedule</h2><span class="muted small">A topic is done when its lesson is finished and it is at Practicing or above</span></div>
+        <div class="table-wrap"><table class="table">
+            <thead><tr><th>Topic</th><th>Status</th><th>Target</th><th class="r">Hours</th><th>Mastery</th><th></th></tr></thead>
+            <tbody>
+            {% for r in saved.rows %}
+                <tr>
+                    <td><a href="{% url 'learning:topic' r.e.item.code %}">{{ r.e.item.name }}</a><div class="small muted">{{ r.e.item.area.name }}</div></td>
+                    <td>{% if r.state == "done" %}<span class="badge badge-good">Done</span>{% elif r.state == "overdue" %}<span class="badge badge-bad">Overdue</span>{% elif r.state == "this_week" %}<span class="badge badge-amber">This week</span>{% else %}<span class="badge">Upcoming</span>{% endif %}</td>
+                    <td>{% if r.due %}Week {{ r.week }} · {{ r.due|date:"M j" }}{% else %}<span class="muted">Done at start</span>{% endif %}</td>
+                    <td class="r">{% if r.hours %}{{ r.hours }}{% else %}—{% endif %}</td>
+                    <td>{% level_badge r.e.level %}</td>
+                    <td class="r">{% if r.state != "done" %}<a class="btn btn-small" href="{% url 'learning:study' r.e.item.code %}">Study</a>{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table></div>
+    </section>
+{% else %}
+    <section class="card">
+        <div class="card-head"><h2>Proposed schedule</h2>{% if est.diagnostic_done %}<span class="muted small">Accept it to get a target week for each topic</span>{% endif %}</div>
+        <div class="table-wrap"><table class="table">
+            <thead><tr><th>#</th><th>Topic</th><th class="r">Exam weight</th><th>Estimated accuracy</th><th>Mastery</th><th class="r">Hours</th><th>Target</th></tr></thead>
+            <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td class="muted">{{ row.rank }}</td>
+                    <td><a href="{% url 'learning:topic' row.e.item.code %}">{{ row.e.item.name }}</a><div class="small muted">{{ row.e.item.area.name }}</div></td>
+                    <td class="r">{{ row.e.weight|pct:1 }}</td>
+                    <td><div class="bar-row" style="grid-template-columns:1fr 3rem;padding:0"><div class="bar{% if row.e.p < 0.5 %} amber{% endif %}"><i style="width:{{ row.e.p|times:100 }}%"></i></div><span class="r small">{{ row.e.p|pct }}</span></div></td>
+                    <td>{% level_badge row.e.level %}</td>
+                    <td class="r">{% if row.done %}—{% else %}{{ row.hours }}{% endif %}</td>
+                    <td>{% if row.done %}<span class="badge badge-good">Done</span>{% else %}Week {{ row.week }}{% endif %}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table></div>
+        <p class="note">Estimated accuracy blends your answers on each topic with your overall average, weighting recent work most. Unstudied topics start at 25%, the rate of guessing.</p>
+    </section>
+{% endif %}
+</div>
+
+<aside class="stack">
+    <section class="card">
+        <h2>Exam date and hours</h2>
+        <form method="post" action="{% url 'learning:onboarding' %}" class="stack">
+            {% csrf_token %}<input type="hidden" name="next" value="{% url 'learning:plan' %}">
+            {% for field in settings_form %}
+                <div><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}</div>
+            {% endfor %}
+            <button class="btn btn-small" type="submit">Save</button>
+            {% if saved %}<p class="note">Changing either rebuilds your schedule from today. Your progress is kept.</p>{% endif %}
+        </form>
+    </section>
+    {% if saved %}
+    <section class="card">
+        <h2>Fell behind?</h2>
+        <p class="secondary small">Re-planning spreads the topics you haven't finished over the weeks you have left. Nothing you've done is lost: mastery, answers, flashcards and spaced review stay as they are.</p>
+        <p class="note">Plans move on gates, not dates: falling behind the schedule never locks you out of anything.</p>
+    </section>
+    {% endif %}
+</aside>
+</div>
 {% endblock %}

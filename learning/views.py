@@ -1,6 +1,5 @@
 """Student pages: onboarding, overview, plan, topics, references."""
 
-import math
 
 from django import forms
 from django.contrib import messages
@@ -14,7 +13,7 @@ from django.views.decorators.http import require_POST
 from curriculum.models import ExamModule, Reference, SpecArea, SpecItem
 from reports import readiness
 
-from . import mastery
+from . import mastery, planning
 from .models import Attempt, ErrorReplay, ItemReview, LessonProgress, PracticeSession, StudentProfile
 
 
@@ -55,14 +54,23 @@ def profile_or_none(user):
 @login_required
 def onboarding(request):
     profile = profile_or_none(request.user)
+    before = (profile.exam_date, profile.hours_per_week) if profile else None
     form = ProfileForm(request.POST or None, instance=profile)
     if request.method == "POST" and form.is_valid():
         p = form.save(commit=False)
         p.user = request.user
-        p.module = ExamModule.objects.filter(is_active=True).first()
+        p.module = p.module if p.module_id else ExamModule.objects.filter(is_active=True).first()
         p.save()
-        messages.success(request, "Saved. Next, the baseline diagnostic.")
-        return redirect("learning:dashboard")
+        changed = before is not None and before != (p.exam_date, p.hours_per_week)
+        if changed and (p.plan or {}).get("rows"):
+            planning.save(p, request.user, "settings")
+            messages.success(request, "Settings saved. Your plan was rebuilt from today to fit them.")
+            return redirect("learning:plan")
+        if profile is None:
+            messages.success(request, "Saved. Next, the baseline diagnostic.")
+            return redirect("learning:dashboard")
+        messages.success(request, "Settings saved.")
+        return redirect(request.POST.get("next") or "learning:dashboard")
     return render(request, "learning/onboarding.html", {"form": form, "profile": profile, "items": SpecItem.objects.count()})
 
 
@@ -153,28 +161,15 @@ def coverage_rows(levels):
 def plan(request):
     user, profile = request.user, request.profile
     est = readiness.estimate(user)
-    ranked = readiness.priorities(est)
-    today = timezone.localdate()
-    weeks = 13
-    if profile.exam_date and profile.exam_date > today:
-        weeks = max(1, math.ceil((profile.exam_date - today).days / 7))
-    total_hours = weeks * profile.hours_per_week
-    study_hours = total_hours * 0.7  # the rest goes to simulations and review
-    score = sum(e.weight * (1 - e.p) for e in ranked) or 1
-    rows = [
-        {"e": e, "hours": round(study_hours * e.weight * (1 - e.p) / score, 1), "rank": i + 1}
-        for i, e in enumerate(ranked)
-    ]
+    prop = planning.proposal(user, profile, est)
     return render(
         request,
         "learning/plan.html",
         {
-            "rows": rows,
-            "est": est,
-            "weeks": weeks,
-            "total_hours": total_hours,
-            "study_hours": round(study_hours),
+            **prop,
             "profile": profile,
+            "saved": planning.progress(user, profile, est),
+            "settings_form": ProfileForm(instance=profile),
         },
     )
 
@@ -182,11 +177,19 @@ def plan(request):
 @require_POST
 @needs_profile
 def accept_plan(request):
-    request.profile.plan_accepted_at = timezone.now()
-    request.profile.save(update_fields=["plan_accepted_at"])
+    planning.save(request.profile, request.user, "accepted")
     mastery.ensure_cards(request.user, SpecItem.objects.all())
-    messages.success(request, "Plan accepted. Build phase unlocked.")
-    return redirect("learning:dashboard")
+    messages.success(request, "Plan accepted. Build phase unlocked. Each topic now has a target week.")
+    return redirect("learning:plan")
+
+
+@require_POST
+@needs_profile
+def replan(request):
+    """Rebuild the schedule from today. Mastery, answers and reviews are kept."""
+    planning.save(request.profile, request.user, "replanned")
+    messages.success(request, "Re-planned from today. Your progress is kept; the remaining topics have new target weeks.")
+    return redirect("learning:plan")
 
 
 @needs_profile

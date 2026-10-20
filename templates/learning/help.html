@@ -11,7 +11,7 @@
     <ol class="steps">
         <li><strong>Set your exam date and weekly hours</strong> in <a href="{% url 'learning:onboarding' %}">Exam settings</a>. The plan assumes about 13 weeks at 8 to 10 hours a week if you have not booked yet.</li>
         <li><strong>Take the baseline diagnostic.</strong> About two questions per topic plus a short lookup test, timed at exam pace. Don't study for it: it measures where you start.</li>
-        <li><strong>Accept your plan.</strong> <a href="{% url 'learning:plan' %}">My plan</a> orders topics by exam weight times room to grow, so your hours go where the points are.</li>
+        <li><strong>Accept your plan.</strong> <a href="{% url 'learning:plan' %}">My plan</a> orders topics by exam weight times room to grow, so your hours go where the points are, and gives each topic a target week.</li>
         <li><strong>Work through topics in plan order</strong> using the lesson loop, and do the <strong>daily warm-up</strong> every day you study.</li>
         <li><strong>Follow "Up next"</strong> on the <a href="{% url 'learning:dashboard' %}">Overview</a>. It always names the single most useful thing to do.</li>
     </ol>
@@ -38,6 +38,17 @@
         <li><strong>Test out.</strong> If the cold try is right, you can test out with two more problems, solved correctly and on pace. Pass both and the topic goes straight to spaced review.</li>
         <li><strong>Going back.</strong> The step pills at the top are links. Open any finished step to look at it again; your progress is kept, and a button takes you back to where you left off. The tutorial can be opened at any time, and each topic page also has a <em>Tutorial</em> button.</li>
         <li><strong>The tutorial.</strong> About 30 minutes: short explanations, explorers you move with sliders, "Try it" questions, and worked examples you reveal one step at a time. Try each step on paper before you reveal it.</li>
+    </ul>
+</section>
+
+<section class="card" id="plan">
+    <h2>Your plan, and falling behind</h2>
+    <ul class="steps">
+        <li>Accepting the plan saves a schedule: each topic you haven't finished gets a target week, based on your exam date and weekly hours. About 70% of your hours go to topics; the rest is for simulations, warm-ups and review.</li>
+        <li>The plan page tells you whether you're <strong>on track</strong>, and marks topics past their target week as <strong>overdue</strong>. A topic counts as done when its lesson is finished and it's at Practicing or above.</li>
+        <li><strong>Fell behind?</strong> Choose <strong>Re-plan from today</strong>. It spreads the topics you haven't finished over the weeks you have left.</li>
+        <li><strong>Exam date moved, or your hours changed?</strong> Update them on the plan page and the schedule rebuilds from today to fit.</li>
+        <li>Re-planning never erases anything: mastery, answers, flashcards and spaced review stay as they are. And the schedule is a guide: falling behind it never locks you out of anything.</li>
     </ul>
 </section>
 
@@ -159,6 +170,7 @@
         <li><a href="#start">Start here</a></li>
         <li><a href="#phases">The five phases</a></li>
         <li><a href="#lesson-loop">The lesson loop</a></li>
+        <li><a href="#plan">Your plan, and falling behind</a></li>
         <li><a href="#week">A typical week</a></li>
         <li><a href="#modes">Practice modes</a></li>
         <li><a href="#mastery">How mastery is measured</a></li>

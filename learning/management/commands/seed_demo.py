@@ -17,7 +17,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from curriculum.models import Card, ExamModule, SpecItem
-from learning import mastery, sessions
+from learning import mastery, planning, sessions
 from learning.models import (
     Attempt,
     CardReview,
@@ -120,6 +120,9 @@ class Command(BaseCommand):
         # Week 1: the diagnostic.
         run(Kind.DIAGNOSTIC, 0)
         backdate_reviews(0)
+        # The schedule as accepted on day 1, before any lesson, so the plan
+        # page shows real pacing against it.
+        planning.save(user.profile, user, "accepted", today=timezone.localdate(start) + timedelta(days=1))
         mastery.ensure_cards(user, items)
 
         order = sorted(items, key=lambda it: skill[it.id])
@@ -167,6 +170,7 @@ class Command(BaseCommand):
             Attempt.objects.filter(id__in=hidden).exclude(kind__in=["lookup", "method", "spot_error", "units", "explain"]).update(counts_for_mastery=True)
         mastery.recompute(user)
         readiness.snapshot(user, readiness.estimate(user))
+
         SharedReport.objects.create(
             student=user,
             kind=SharedReport.Kind.READINESS,

@@ -101,3 +101,50 @@ class RulesTest(TestCase):
     def test_unstudied_topics_score_as_guessing(self):
         est = readiness.estimate(self.user)
         self.assertTrue(all(e.p == readiness.GUESS for e in est.items))
+
+
+class PlanningTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_course", verbosity=0)
+
+    def setUp(self):
+        from curriculum.models import ExamModule
+
+        self.user = User.objects.create_user("p")
+        self.profile = StudentProfile.objects.create(user=self.user, module=ExamModule.objects.first(), hours_per_week=10)
+        PracticeSession.objects.create(student=self.user, kind=PracticeSession.Kind.DIAGNOSTIC, finished_at=timezone.now())
+
+    def test_accept_schedules_every_topic_within_the_weeks(self):
+        from learning import planning
+
+        planning.save(self.profile, self.user)
+        rows = self.profile.plan["rows"]
+        self.assertEqual(len(rows), SpecItem.objects.count())
+        self.assertTrue(all(1 <= r["week"] <= self.profile.plan["weeks"] for r in rows))
+        self.assertIsNotNone(self.profile.plan_accepted_at)
+
+    def test_behind_then_replan_is_on_track(self):
+        from learning import planning
+
+        start = timezone.localdate() - timedelta(days=60)
+        planning.save(self.profile, self.user, today=start)
+        status = planning.progress(self.user, self.profile)
+        self.assertFalse(status["on_track"])
+        self.assertGreater(status["overdue"], 0)
+        planning.save(self.profile, self.user, "replanned")
+        status = planning.progress(self.user, self.profile)
+        self.assertTrue(status["on_track"])
+        self.assertEqual(status["start"], timezone.localdate())
+
+    def test_changing_exam_date_rebuilds_the_schedule(self):
+        from learning import planning
+
+        planning.save(self.profile, self.user, today=timezone.localdate() - timedelta(days=30))
+        self.client.force_login(self.user)
+        new_date = (timezone.localdate() + timedelta(days=70)).isoformat()
+        self.client.post("/start/", {"exam_date": new_date, "hours_per_week": 10})
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.plan["reason"], "settings")
+        self.assertEqual(self.profile.plan["start"], timezone.localdate().isoformat())
+        self.assertEqual(self.profile.plan["weeks"], 10)
