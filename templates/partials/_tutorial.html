@@ -1,0 +1,80 @@
+{% load django_docutils course %}
+{% comment %}
+    A lesson's interactive tutorial: its blocks in order. Widgets mount from
+    static/js/tutorials.js plus the topic's own static/js/widgets/<code>.js.
+{% endcomment %}
+<div class="tutorial">
+    {% for b in blocks %}
+        <section class="t-block t-{{ b.kind }}" id="block-{{ b.id }}">
+            {% if b.kind == "text" %}
+                {% if b.title %}<h2>{{ b.title }}</h2>{% endif %}
+                <div class="lesson">{% with content=b.body %}{% rst content show_title=False %}{% endwith %}</div>
+
+            {% elif b.kind == "figure" or b.kind == "explorer" %}
+                <div class="t-card{% if b.kind == 'explorer' %} t-explorer{% endif %}">
+                    <div class="t-card-head">
+                        <span class="t-tag">{% if b.kind == "explorer" %}Explore{% else %}Figure{% endif %}</span>
+                        {% if b.title %}<h3>{{ b.title }}</h3>{% endif %}
+                    </div>
+                    {% if b.body and b.kind == "explorer" %}<div class="lesson t-caption">{% with content=b.body %}{% rst content show_title=False %}{% endwith %}</div>{% endif %}
+                    <div class="widget" data-widget="{{ b.widget }}" data-mode="{{ b.kind }}" data-config="{{ b.config_json }}"></div>
+                    {% if b.body and b.kind == "figure" %}<div class="lesson t-caption">{% with content=b.body %}{% rst content show_title=False %}{% endwith %}</div>{% endif %}
+                </div>
+
+            {% elif b.kind == "check" %}
+                <div class="t-card t-check" data-check data-interactive data-log-url="{% url 'learning:tutorial_check' b.id %}">
+                    <div class="t-card-head"><span class="t-tag t-tag-amber">Try it</span>{% if b.title %}<h3>{{ b.title }}</h3>{% endif %}</div>
+                    <div class="lesson">{% with content=b.prompt %}{% rst content show_title=False %}{% endwith %}</div>
+                    <form{% if b.answer is not None %} data-answer="{{ b.answer }}" data-tolerance="{{ b.tolerance|default:0 }}"{% endif %}>
+                        {% if b.choices %}
+                            <div class="choices">
+                                {% for c in b.choices %}
+                                    <label class="choice"><input type="radio" name="choice" value="{{ forloop.counter0 }}" data-correct="{% if c.correct %}1{% else %}0{% endif %}" data-why="{{ c.why }}"><span class="letter">{{ forloop.counter0|letter }}</span><span>{{ c.label }}</span></label>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="t-numeric">
+                                <input type="text" name="value" inputmode="decimal" autocomplete="off" aria-label="Your answer{% if b.unit %} in {{ b.unit }}{% endif %}">
+                                {% if b.unit %}<span class="secondary">{{ b.unit }}</span>{% endif %}
+                            </div>
+                        {% endif %}
+                        <div class="t-actions">
+                            <button class="btn btn-primary btn-small" type="submit">Check</button>
+                            <button class="btn btn-ghost btn-small" type="button" data-show>Show me the explanation</button>
+                        </div>
+                    </form>
+                    <p class="t-feedback" data-feedback aria-live="polite"></p>
+                    {% if b.hint %}<div class="hint-box" data-hint hidden><strong>Hint:</strong> {{ b.hint }}</div>{% endif %}
+                    <div class="t-explanation" data-explanation hidden>
+                        <h4>Explanation</h4>
+                        <div class="lesson">{% with content=b.explanation %}{% rst content show_title=False %}{% endwith %}</div>
+                        {% if b.widget %}<div class="widget" data-widget="{{ b.widget }}" data-mode="figure" data-config="{{ b.config_json }}"></div>{% endif %}
+                    </div>
+                </div>
+
+            {% elif b.kind == "example" %}
+                <div class="t-card t-example" data-example data-interactive>
+                    <div class="t-card-head"><span class="t-tag t-tag-blue">Worked example</span>{% if b.title %}<h3>{{ b.title }}</h3>{% endif %}</div>
+                    <div class="lesson">{% with content=b.prompt %}{% rst content show_title=False %}{% endwith %}</div>
+                    <p class="note">Before each step, try it yourself on paper. Then reveal it and compare.</p>
+                    <ol class="t-steps">
+                        {% for s in b.steps %}
+                            <li data-step hidden>
+                                {% if s.think %}<div class="t-think" data-think><strong>Think first:</strong> {{ s.think }}</div>{% endif %}
+                                <div class="lesson" data-step-text{% if s.think %} hidden{% endif %}>{% with content=s.text %}{% rst content show_title=False %}{% endwith %}</div>
+                            </li>
+                        {% endfor %}
+                    </ol>
+                    <div class="t-final" data-final hidden>
+                        {% if b.explanation %}<div class="lesson">{% with content=b.explanation %}{% rst content show_title=False %}{% endwith %}</div>{% endif %}
+                        {% if b.widget %}<div class="widget" data-widget="{{ b.widget }}" data-mode="figure" data-config="{{ b.config_json }}"></div>{% endif %}
+                    </div>
+                    <div class="t-actions">
+                        <button class="btn btn-primary btn-small" type="button" data-next-step>Show step 1</button>
+                        <button class="btn btn-ghost btn-small" type="button" data-show-all>Show all steps</button>
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+    {% endfor %}
+</div>

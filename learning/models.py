@@ -112,6 +112,7 @@ class Attempt(models.Model):
         SPOT_ERROR = "spot_error", "Spot the error"
         UNITS = "units", "Units"
         EXPLAIN = "explain", "Explain it back"
+        CHECK = "check", "Tutorial check"
 
     class AuditSource(models.TextChoices):
         NONE = "", "None"

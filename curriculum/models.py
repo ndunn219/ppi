@@ -8,6 +8,8 @@ wrong answers that common mistakes produce, so new numbers never need a
 new answer key.
 """
 
+import json
+
 from django.db import models
 
 
@@ -132,7 +134,11 @@ class ReviewedContent(models.Model):
 
 
 class Lesson(ReviewedContent):
-    """The micro-lesson for a spec item, in reStructuredText."""
+    """The lesson for a spec item.
+
+    `body` is the short summary (the cheat sheet a student reviews later).
+    The tutorial itself is the lesson's ordered TutorialBlocks.
+    """
 
     spec_item = models.OneToOneField(SpecItem, on_delete=models.CASCADE, related_name="lesson")
     title = models.CharField(max_length=160)
@@ -141,6 +147,60 @@ class Lesson(ReviewedContent):
 
     def __str__(self):
         return self.title
+
+
+class TutorialBlock(models.Model):
+    """One step of a lesson's interactive tutorial.
+
+    Kinds:
+
+    * text: reStructuredText prose.
+    * figure: a widget drawn once with fixed values, as an illustration.
+    * explorer: a widget with sliders the student moves.
+    * check: a question inside the tutorial, multiple choice (`choices`)
+      or numeric (`answer` within `tolerance`), with a detailed
+      explanation and optionally a figure shown once answered.
+    * example: a worked example the student reveals one step at a time,
+      each step optionally preceded by a "think first" prompt.
+
+    Widgets live in static/js/widgets/<topic code>.js; `config` holds
+    their starting or fixed values.
+    """
+
+    class Kind(models.TextChoices):
+        TEXT = "text", "Text"
+        FIGURE = "figure", "Figure"
+        EXPLORER = "explorer", "Interactive explorer"
+        CHECK = "check", "Try it (question)"
+        EXAMPLE = "example", "Worked example"
+
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="blocks")
+    order = models.PositiveSmallIntegerField(default=0)
+    kind = models.CharField(max_length=10, choices=Kind.choices)
+    title = models.CharField(max_length=160, blank=True)
+    body = models.TextField(blank=True, help_text="reStructuredText: prose, a figure caption or explorer instructions.")
+    widget = models.CharField(max_length=60, blank=True, help_text="Widget name registered in the topic's widget file.")
+    config = models.JSONField(default=dict, blank=True, help_text='{"values": {...}} sets the widget\'s starting or fixed values.')
+    prompt = models.TextField(blank=True, help_text="Question or worked-example statement.")
+    choices = models.JSONField(
+        default=list, blank=True, help_text='[{"label": "…", "correct": true, "why": "…"}] for multiple choice.'
+    )
+    answer = models.FloatField(null=True, blank=True, help_text="Numeric answer, for a numeric check.")
+    tolerance = models.FloatField(null=True, blank=True, help_text="Accepted absolute error for a numeric check.")
+    unit = models.CharField(max_length=24, blank=True)
+    hint = models.TextField(blank=True)
+    explanation = models.TextField(blank=True, help_text="reStructuredText shown after the student answers.")
+    steps = models.JSONField(default=list, blank=True, help_text='[{"think": "…", "text": "…"}] for a worked example.')
+
+    class Meta:
+        ordering = ["lesson", "order"]
+
+    def __str__(self):
+        return f"{self.lesson.spec_item.code} #{self.order} {self.get_kind_display()}: {self.title or self.prompt[:40]}"
+
+    @property
+    def config_json(self):
+        return json.dumps(self.config or {})
 
 
 class ProblemTemplate(ReviewedContent):

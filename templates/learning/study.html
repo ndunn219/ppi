@@ -1,6 +1,7 @@
 {% extends "base.html" %}
-{% load course django_docutils %}
+{% load static course django_docutils %}
 {% block title %}{{ item.name }}{% endblock %}
+{% block extra_head %}{% if blocks %}<script src="{% static 'js/tutorials.js' %}?v={{ asset_version }}" defer></script>{% if widget_script %}<script src="{% static widget_script %}?v={{ asset_version }}" defer></script>{% endif %}{% endif %}{% endblock %}
 {% block crumbs %}<div class="crumbs"><a href="{% url 'learning:topics' %}">Topics</a> / <a href="{% url 'learning:topic' item.code %}">{{ item.name }}</a></div>{% endblock %}
 {% block page_title %}<h1>{{ item.name }}</h1><p class="subtitle">You never go more than 10 minutes without solving something.</p>{% endblock %}
 {% block content %}
@@ -28,21 +29,20 @@
     </div>
 
 {% elif lp.stage == "learn" %}
-    <div class="grid">
-        <section class="card span-2">
-            <div class="card-head"><h2>{{ lesson.title }}</h2><span class="muted small">{{ lesson.minutes }} min{% if not lesson.reviewed_by_pe %} · not yet PE-reviewed{% endif %}</span></div>
-            <div class="lesson">{% with content=lesson.body %}{% rst content show_title=False %}{% endwith %}</div>
-            <form method="post" action="{% url 'learning:study_next' item.code %}" style="margin-top:20px">{% csrf_token %}<button class="btn btn-primary">Next: a worked example</button></form>
-        </section>
-        <section class="card">
-            <h2>Where it lives</h2>
-            {% for loc in locations %}
-                <div class="refcard"><strong>{{ loc.reference.short_name }}</strong><span class="secondary small">{{ loc.locator }}</span>
-                    {% if loc.search_term_list %}<div class="terms">{% for t in loc.search_term_list %}<span class="term">{{ t }}</span>{% endfor %}</div>{% endif %}</div>
-            {% endfor %}
-            {% if item.cue_list %}<h3 style="margin-top:12px">Cues</h3><div class="cues">{% for c in item.cue_list %}<span class="badge">{{ c }}</span>{% endfor %}</div>{% endif %}
-            <p class="note">Search terms find the page in a searchable PDF. Try them in your own copy.</p>
-        </section>
+    <div class="grid" style="align-items:start">
+        <div class="span-2">
+            {% if blocks %}
+                <p class="t-progress" style="margin-bottom:12px">Interactive tutorial · about {{ lesson.minutes }} minutes · <span data-tutorial-progress>{{ activity_count }} activities</span></p>
+                {% include "partials/_tutorial.html" %}
+            {% else %}
+                <section class="card"><div class="lesson">{% with content=lesson.body %}{% rst content show_title=False %}{% endwith %}</div></section>
+            {% endif %}
+            <form method="post" action="{% url 'learning:study_next' item.code %}" class="card" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">{% csrf_token %}
+                <span class="secondary">Done with the tutorial? Next, a worked example that fades into problems you solve yourself.</span>
+                <button class="btn btn-primary">Next: worked example</button>
+            </form>
+        </div>
+        {% include "partials/_tutorial_side.html" %}
     </div>
 
 {% elif lp.stage == "fade" and lp.fade_level == 0 %}

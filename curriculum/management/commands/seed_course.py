@@ -8,7 +8,7 @@ the content file.
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from curriculum import content
+from curriculum import content, tutorials
 from curriculum.models import (
     Card,
     ExamModule,
@@ -19,7 +19,10 @@ from curriculum.models import (
     ReferenceLocation,
     SpecArea,
     SpecItem,
+    TutorialBlock,
 )
+
+BLOCK_FIELDS = {f.name for f in TutorialBlock._meta.get_fields()} - {"id", "lesson", "order"}
 
 
 class Command(BaseCommand):
@@ -94,5 +97,17 @@ class Command(BaseCommand):
                         {"slug": t["slug"]},
                         {"spec_item": item, **{k: v for k, v in t.items() if k != "slug"}},
                     )
+        for code, tut in tutorials.load_all().items():
+            lesson = Lesson.objects.filter(spec_item__code=code).first()
+            if lesson is None:
+                continue
+            if lesson.blocks.exists() and not self.update:
+                continue
+            lesson.blocks.all().delete()
+            for order, block in enumerate(tut["blocks"]):
+                TutorialBlock.objects.create(lesson=lesson, order=order, **{k: v for k, v in block.items() if k in BLOCK_FIELDS})
+            lesson.minutes = tut.get("minutes", lesson.minutes)
+            lesson.save(update_fields=["minutes"])
+            self.counts["TutorialBlock"] = self.counts.get("TutorialBlock", 0) + len(tut["blocks"])
         made = ", ".join(f"{n} {name}" for name, n in self.counts.items() if n) or "nothing new"
         self.stdout.write(self.style.SUCCESS(f"Course content ready ({'updated' if update else 'created'}: {made})."))

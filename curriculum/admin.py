@@ -14,6 +14,7 @@ from .models import (
     ReferenceLocation,
     SpecArea,
     SpecItem,
+    TutorialBlock,
 )
 
 
@@ -104,8 +105,23 @@ class ReferenceLocationAdmin(admin.ModelAdmin):
     search_fields = ["locator", "what_is_there", "search_terms"]
 
 
+class TutorialBlockInline(admin.StackedInline):
+    model = TutorialBlock
+    extra = 0
+    fields = ["order", "kind", "title", "body", "widget", "config", "prompt", "choices", "answer", "tolerance", "unit", "hint", "explanation", "steps"]
+    ordering = ["order"]
+
+
+@admin.register(TutorialBlock)
+class TutorialBlockAdmin(admin.ModelAdmin):
+    list_display = ["__str__", "kind", "widget", "lesson"]
+    list_filter = ["kind", "lesson__spec_item__area"]
+    search_fields = ["title", "body", "prompt", "explanation"]
+
+
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
+    inlines = [TutorialBlockInline]
     list_display = ["title", "spec_item", "minutes", "reviewed_by_pe", "reviewed_on"]
     list_filter = ["reviewed_by_pe", "spec_item__area"]
     search_fields = ["title", "body"]

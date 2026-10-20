@@ -4,6 +4,7 @@
 {% block crumbs %}<div class="crumbs"><a href="{% url 'learning:topics' %}">Topics</a> / {{ item.area.name }}</div>{% endblock %}
 {% block page_title %}<h1>{{ item.name }}</h1><p class="subtitle">{{ item.summary }}</p>{% endblock %}
 {% block page_actions %}
+    <a class="btn" href="{% url 'learning:tutorial' item.code %}">Tutorial</a>
     <a class="btn btn-primary" href="{% url 'learning:study' item.code %}">{% if lp.stage == "done" %}Review the lesson{% elif lp %}Continue the lesson{% else %}Start the lesson{% endif %}</a>
 {% endblock %}
 {% block content %}

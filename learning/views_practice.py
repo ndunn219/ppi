@@ -1,9 +1,12 @@
 """Practice pages: the hub, the question runner, the lesson loop, cards,
 the error journal, and the tutor's audits."""
 
+import json
 import random
 
 from django.conf import settings
+from django.contrib.staticfiles import finders
+from django.http import JsonResponse
 from django.contrib import messages
 from django.db.models import Count
 from django.http import Http404
@@ -254,8 +257,7 @@ def study(request, code):
     if lp.stage == Stage.DONE:
         ctx["summary"] = lesson_summary(request.user, item)
     elif lp.stage == Stage.LEARN:
-        ctx["lesson"] = getattr(item, "lesson", None)
-        ctx["locations"] = item.locations.select_related("reference")
+        ctx.update(tutorial_context(item))
     elif lp.stage == Stage.FADE and lp.fade_level == 0:
         inst = sessions.new_instance(random.choice(sessions.active_templates([item])))
         ctx["worked"] = inst
@@ -517,3 +519,50 @@ def explain(request):
         messages.info(request, "No explain-it-back questions for that topic yet.")
         return redirect("learning:practice")
     return render(request, "learning/explain.html", {"template": random.choice(pool), "done": False})
+
+
+# --- Interactive tutorials ----------------------------------------------------
+
+
+def tutorial_context(item):
+    lesson = getattr(item, "lesson", None)
+    blocks = list(lesson.blocks.all()) if lesson else []
+    script = f"js/widgets/{item.code.lower()}.js"
+    return {
+        "lesson": lesson,
+        "blocks": blocks,
+        "widget_script": script if finders.find(script) else None,
+        "locations": item.locations.select_related("reference"),
+        "activity_count": sum(1 for b in blocks if b.kind in ("check", "example")),
+    }
+
+
+@needs_profile
+def tutorial(request, code):
+    """The tutorial on its own, to read or revisit outside the lesson loop."""
+    item = get_object_or_404(SpecItem.objects.select_related("area"), code=code)
+    lp = LessonProgress.objects.filter(student=request.user, spec_item=item).first()
+    return render(request, "learning/tutorial.html", {"item": item, "lp": lp, **tutorial_context(item)})
+
+
+@require_POST
+@needs_profile
+def tutorial_check(request, pk):
+    """Record an answer to a check inside a tutorial. Not counted toward mastery."""
+    from curriculum.models import TutorialBlock
+
+    block = get_object_or_404(TutorialBlock.objects.select_related("lesson__spec_item"), pk=pk, kind="check")
+    try:
+        data = json.loads(request.body or b"{}")
+    except ValueError:
+        data = {}
+    Attempt.objects.create(
+        student=request.user,
+        kind=Attempt.Kind.CHECK,
+        spec_item=block.lesson.spec_item,
+        response=str(data.get("response", ""))[:200],
+        is_correct=bool(data.get("correct")),
+        counts_for_mastery=False,
+        extra={"block": block.id, "tries": int(data.get("tries") or 0)},
+    )
+    return JsonResponse({"ok": True})
