@@ -229,6 +229,20 @@ LOOP = [
     (Stage.DONE, "Schedule", "The topic joins spaced review, with your flashcards."),
 ]
 LOOP_ORDER = [key for key, _, _ in LOOP]
+# On a redo, step 1 is the same single problem, but you've seen the lesson
+# before, so it checks what you remember rather than priming you.
+RECALL_CHECK = ("Recall check", "One problem before you revisit the topic: what do you remember? Get it right and you can test out.")
+
+
+def is_redo(user, item, lp):
+    """True when the current pass through the loop is not the first.
+
+    A finished pass counts as earlier only if another pass came after it:
+    while a pass is in progress, any finished one is earlier; once the
+    current pass is done, it is itself the latest finished one.
+    """
+    finished = PracticeSession.objects.filter(student=user, kind=Kind.LESSON, spec_item=item, finished_at__isnull=False).count()
+    return finished >= (2 if lp.stage == Stage.DONE else 1)
 TRY_COUNT = 3
 TESTOUT_COUNT = 2
 
@@ -259,9 +273,10 @@ def study(request, code):
     if session and lp.stage == Stage.FADE and lp.fade_level > 0 and not [q for q in session.items if q.get("fade") == lp.fade_level]:
         add_problem(session, item, "fade", fade=lp.fade_level)
 
-    ctx = {"item": item, "lp": lp, "session": session, "references": Reference.objects.all()}
+    redo = is_redo(request.user, item, lp)
+    ctx = {"item": item, "lp": lp, "session": session, "references": Reference.objects.all(), "redo": redo}
     review = request.GET.get("step")
-    steps = loop_state(lp, item, review)
+    steps = loop_state(lp, item, review, redo)
     ctx["loop_state"] = steps
     current_key = current_step(lp)
     position_now = LOOP_ORDER.index(current_key)
@@ -299,13 +314,15 @@ def current_step(lp):
     return Stage.PRIME if lp.stage == Stage.TESTOUT else lp.stage
 
 
-def loop_state(lp, item, viewing=None):
+def loop_state(lp, item, viewing=None, redo=False):
     """The step pills. Finished steps and the current one can be opened;
     the tutorial can always be opened; later steps unlock in order."""
     idx = LOOP_ORDER.index(current_step(lp))
     base = reverse("learning:study", args=[item.code])
     out = []
     for i, (key, label, desc) in enumerate(LOOP):
+        if key == Stage.PRIME and redo:
+            label, desc = RECALL_CHECK
         state = "done" if i < idx else ("current" if i == idx else "")
         open_ = i <= idx or key == Stage.LEARN
         url = (base if i == idx else f"{base}?step={key}") if open_ else None
@@ -405,7 +422,8 @@ def study_next(request, code):
         else:
             add_problem(session, item, Stage.TRY)
     elif lp.stage == Stage.DONE and action == "restart":
-        lp.stage, lp.fade_level, lp.completed_at = Stage.LEARN, 0, None
+        # Start again from step 1: a recall check, with test-out if it's right.
+        lp.stage, lp.fade_level, lp.completed_at, lp.tested_out = Stage.PRIME, 0, None, False
         lp.save()
     return redirect("learning:study", code)
 

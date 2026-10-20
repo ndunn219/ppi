@@ -179,8 +179,41 @@ class LessonReviewTest(TestCase):
         self.walk("SD1")
         resp = self.client.get("/study/SD1/?step=prime")
         self.assertContains(resp, "Cold try")
+        self.assertContains(resp, "Recall check")
         self.assertContains(resp, "time 1 through the lesson")
         self.assertNotContains(resp, "no cold try on record")
+
+    def correct_choice(self, code):
+        from learning.models import PracticeSession, ProblemInstance
+
+        s = PracticeSession.objects.filter(student=self.user, kind="lesson", spec_item__code=code, finished_at__isnull=True).first()
+        inst = ProblemInstance.objects.get(id=s.items[-1]["instance"])
+        return next(i for i, c in enumerate(inst.choices) if not c["cause"])
+
+    def test_redo_starts_with_a_recall_check_and_allows_test_out(self):
+        from learning.models import LessonProgress
+
+        self.walk("TC1")
+        self.client.post("/study/TC1/next/", {"action": "restart"})
+        html = self.client.get("/study/TC1/").content.decode()
+        self.assertIn("Recall check: what do you remember", html)
+        self.assertIn("1. Recall check", html)
+        self.client.post("/study/TC1/answer/", {"choice": self.correct_choice("TC1"), "seconds": 60})
+        self.assertContains(self.client.get("/study/TC1/"), "test out")
+        self.client.post("/study/TC1/next/", {"action": "testout"})
+        for _ in range(2):
+            self.client.post("/study/TC1/answer/", {"choice": self.correct_choice("TC1"), "seconds": 60})
+            self.client.post("/study/TC1/next/", {"action": "next"})
+        lp = LessonProgress.objects.get(student=self.user, spec_item__code="TC1")
+        self.assertEqual(lp.stage, LessonProgress.Stage.DONE)
+        self.assertTrue(lp.tested_out)
+
+    def test_first_pass_says_cold_try(self):
+        self.assertContains(self.client.get("/study/HD2/"), "Cold try: try it before any teaching")
+        self.walk("HD2")
+        html = self.client.get("/study/HD2/").content.decode()
+        self.assertIn("1. Cold try", html)  # still the first pass once it's done
+        self.assertNotIn("Recall check", html)
 
     def test_no_record_says_why(self):
         from learning.models import LessonProgress
