@@ -13,6 +13,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
+from django_docutils.lib.publisher import publish_html_from_source
 from docutils.core import publish_doctree
 
 from curriculum import tutorials
@@ -23,11 +24,17 @@ FIELDS = {f.name for f in TutorialBlock._meta.get_fields()} - {"id", "lesson", "
 
 
 def rst_problems(text):
+    """Warnings from docutils, plus any failure of the django-docutils
+    writer the pages use (it can fail where plain docutils does not)."""
     problems = []
     doctree = publish_doctree(text or "", settings_overrides={"report_level": 5, "halt_level": 5})
     for msg in doctree.traverse(condition=lambda n: n.tagname == "system_message"):
         if int(msg.get("level", 0)) >= 2:
             problems.append(msg.astext().splitlines()[0])
+    try:
+        publish_html_from_source(text or "", show_title=False)
+    except Exception as exc:  # report every writer failure, whatever its type
+        problems.append(f"page renderer failed: {type(exc).__name__}: {exc}")
     return problems
 
 
@@ -96,6 +103,7 @@ class Command(BaseCommand):
                     errors.append(f"{code}: has {counts.get(k, 0)} {k} blocks; at least {n} expected")
             self.stdout.write(f"{code}: {sum(counts.values())} blocks {counts}")
         if export:
+            Path(export).parent.mkdir(parents=True, exist_ok=True)
             Path(export).write_text(json.dumps(configs, indent=1))
             self.stdout.write(f"Wrote {len(configs)} widget configs to {export}")
         if errors:

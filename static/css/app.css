@@ -497,3 +497,12 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 /* A marked answer keeps its verdict colour even while selected. */
 .choice.is-wrong:has(input:checked) { border-color: var(--bad); background: var(--bad-soft); box-shadow: inset 0 0 0 1px var(--bad); }
 .choice.is-correct:has(input:checked) { border-color: var(--good); background: var(--good-soft); box-shadow: inset 0 0 0 1px var(--good); }
+
+/* Grid children may shrink below their content (long formulas scroll inside their own box). */
+.grid > * { min-width: 0; }
+
+@media (max-width: 600px) {
+  .w-svg .w-label, .w-svg .w-label-strong, .w-svg .w-label-accent, .w-svg .w-label-amber, .w-svg .w-label-bad { font-size: 18px; }
+  .w-svg .w-small { font-size: 15px; }
+  .w-out { flex: 1 1 100%; }
+}

@@ -5,7 +5,8 @@ A proof-of-concept prep course for the PE Civil exam (Transportation depth modul
 ## What is in it
 
 - **Five phases with gates:** Diagnose, Build, Strengthen, Simulate, Taper. The gates are computed from evidence.
-- **The learning loop for each topic:** prime, micro-lesson in reStructuredText (rendered with django-docutils), worked example with fading, three try problems, then spaced review. A student can test out after a correct prime.
+- **The learning loop for each topic:** prime, interactive tutorial, worked example with fading, three try problems, then spaced review. A student can test out after a correct prime.
+- **Interactive tutorials for every topic** (`/learn/<code>/`), about 30 minutes each. Each mixes explanation in reStructuredText (rendered with django-docutils), explorers with sliders, figures, "Try it" questions with a retry, a hint and an illustrated explanation, and worked examples revealed one step at a time. The engine is `static/js/tutorials.js`, each topic's diagrams are in `static/js/widgets/<code>.js`, and the content is in `curriculum/tutorials/<code>.py`.
 - **Fifteen practice modes:** daily warm-up, flashcards (SM-2), parametric drills, worked-example fading, lookup sprints, which method?, estimate first, spot the error, explain it back, error replay, units drill, mixed timed blocks, half-exam set, full simulation, and the diagnostic.
 - **Problem templates whose numbers change.** Each solver in `curriculum/solvers.py` computes the answer, the worked steps, and wrong answers produced by named mistakes, so a wrong pick is diagnosed (units, setup, method and so on).
 - **Mastery levels per topic:** Not started, Introduced, Practicing, Proficient, Exam-ready. Hints halve credit, and a level decays while its review is overdue.
@@ -38,6 +39,16 @@ To see the reports with data, create the demo student. It has five weeks of simu
 .venv/bin/python manage.py seed_demo --password choose-a-password
 ```
 
+Validate tutorial content and widgets after editing them:
+
+```bash
+.venv/bin/python manage.py check_tutorials --export build/widget-configs.json
+```
+
+```bash
+node scripts/check_widgets.js build/widget-configs.json
+```
+
 Run the tests and the end-to-end walk:
 
 ```bash
@@ -66,4 +77,4 @@ See `BUILD_LOG.md` for the decisions made while building it.
 
 ## Local test accounts
 
-The local SQLite database used while building has two test accounts. They exist only in `db.sqlite3`, which is not committed: `demo` / `demo-local-2026` (the demo student) and `admin` / `admin-local-2026` (the superuser). Render starts with an empty database, so create your own accounts there.
+The local SQLite database used while building has test accounts that exist only in `db.sqlite3`, which is not committed: `demo` (the demo student, created with `demo-local-2026`), `admin` (the superuser, created with `admin-local-2026`), and `reviewer`, whose generated password is in the git-ignored `.local-test-account` file. Render starts with an empty database, so create your own accounts there.

@@ -6,6 +6,6 @@ staticfiles/
 media/
 .env
 .DS_Store
-build/screens/
 .claude/
 .local-test-account
+build/

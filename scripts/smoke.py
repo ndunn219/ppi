@@ -78,6 +78,11 @@ for url in ["/", "/plan/", "/topics/", "/topics/TE1/", "/practice/", "/cards/", 
             "/references/", "/reports/", "/reports/readiness/", "/reports/weekly/", "/practice/explain/"]:
     get(url)
 
+from curriculum.models import SpecItem  # noqa: E402
+
+for code in SpecItem.objects.values_list("code", flat=True):
+    get(f"/learn/{code}/")
+
 diag = run_session("diagnostic")
 post("/plan/accept/", {})
 for kind in ["drill", "warmup", "lookup", "method", "estimate", "spot_error", "replay", "units", "timed_block"]:

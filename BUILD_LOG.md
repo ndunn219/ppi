@@ -23,6 +23,19 @@ Built in one session on 2026-10-20 by Claude (Opus 5.5) from the course design p
 | reStructuredText | Lessons stored as RST and rendered with django-docutils; admindocs enabled at `/admin/doc/` | As requested |
 | Render | Blueprint with free web and Postgres plans | Cheapest to try. Render's free Postgres expires after 30 days, so switch to a paid plan to keep data |
 
+## Second pass: interactive tutorials
+
+The first version taught with roughly 300-word summaries per topic, which made the course mostly practice questions. Each topic now has an interactive tutorial of about 30 minutes, in the lesson loop's Learn step and at `/learn/<code>/`.
+
+| Decision | Why |
+| --- | --- |
+| A tutorial is an ordered list of blocks (text, figure, explorer, check, worked example), stored as `TutorialBlock` rows and editable in the admin under each lesson | Content stays data, and a PE reviewer can fix one block without touching code |
+| One widget function per diagram draws the explorer, the fixed figure and the illustration under each explanation | The picture a student explores is the same one that explains their answer |
+| Widgets are plain JavaScript returning SVG, checked headlessly in Node | No chart library, and every widget is tested across its slider ranges |
+| Checks are graded in the browser, give one retry with a hint, then the full explanation | They are for learning, not evidence; they are logged as `check` attempts but never count toward mastery |
+| VD1 was written first as the reference; the other 11 topics were written in parallel to the same pattern and then reviewed | Consistency across topics |
+| The old summary stays as each topic's "cheat sheet", beside the tutorial | Quick review before an exam |
+
 ## How it was checked
 
 - 27 unit tests (`tests/`): every solver against hand-worked values, every template drawn 50 times (four distinct choices, one correct, every wrong one explained, at least one flawed step for Spot the error), mastery levels, decay, the review ladder and readiness zones.
