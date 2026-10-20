@@ -1,0 +1,14 @@
+{% comment %}
+    The on-screen reference panel. Only public-domain documents are linked;
+    the student's own PDFs open locally and are never uploaded.
+{% endcomment %}
+<section class="card refpanel" aria-labelledby="ref-h" data-refpanel>
+    <div class="card-head"><h2 id="ref-h">References</h2><span class="muted small">One document open at a time, like the exam</span></div>
+    <div class="ref-tabs">
+        <a class="btn btn-small" href="https://mutcd.fhwa.dot.gov/" target="_blank" rel="noopener">MUTCD (public)</a>
+        <label class="btn btn-small" style="margin:0">Open my PDF<input type="file" accept="application/pdf" data-local-pdf hidden></label>
+    </div>
+    <iframe title="Your reference document" data-pdf-frame hidden></iframe>
+    <p class="scratch-note" data-pdf-empty>Open your own copy of the NCEES Handbook or a design standard. It stays on this device: the file is shown in your browser and never sent to the course.</p>
+    <p class="scratch-note">Work on a whiteboard or laminated sheet, as on exam day.</p>
+</section>

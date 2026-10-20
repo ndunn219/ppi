@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Get started{% endblock %}
+{% block page_title %}<h1>{% if profile %}Exam settings{% else %}Welcome{% endif %}</h1><p class="subtitle">Two questions, then a timed baseline across all {{ items }} topics.</p>{% endblock %}
+{% block content %}
+<div class="grid grid-2">
+    <section class="card">
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+                    {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+            {% endfor %}
+            <button class="btn btn-primary" type="submit">Save</button>
+        </form>
+    </section>
+    <section class="card">
+        <h2>How the course works</h2>
+        <ol class="steps">
+            <li><strong>Diagnose.</strong> A timed baseline and a lookup test set your plan.</li>
+            <li><strong>Build.</strong> Short lessons, each followed by problems with new numbers.</li>
+            <li><strong>Strengthen.</strong> Mixed timed blocks, error replay and lookup sprints.</li>
+            <li><strong>Simulate.</strong> Two full exams with on-screen references.</li>
+            <li><strong>Taper.</strong> Light review and a final readiness report.</li>
+        </ol>
+        <p class="note">Gates, not dates, move you forward. Only work you solve without hints raises your mastery.</p>
+    </section>
+</div>
+{% endblock %}

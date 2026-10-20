@@ -1,0 +1,77 @@
+{% load course %}
+{# One question. `action` is where the form posts; exam-style sessions add navigation. #}
+<form method="post" action="{{ action }}" data-question{% if session.is_exam_style %} data-exam{% endif %}>
+    {% csrf_token %}
+    <input type="hidden" name="position" value="{{ position }}">
+    <input type="hidden" name="seconds" value="0" data-seconds>
+    <input type="hidden" name="hint_used" value="" data-hint-used>
+
+    {% if q.type == "problem" %}
+        <p class="q-stem">{{ instance.stem }}</p>
+        {% if shown_steps %}
+            <div class="hint-box"><strong>Worked so far:</strong><ol class="steps">{% for s in shown_steps %}<li>{{ s.text }}</li>{% endfor %}</ol><span class="small">Finish it: pick the final answer.</span></div>
+        {% endif %}
+        {% if q.estimate %}
+            <p class="small"><strong>First, estimate.</strong> Which range holds the answer?</p>
+            <div class="estimate" data-estimate>
+                {% for b in q.estimate %}<label><input type="radio" name="estimate" value="{{ forloop.counter0 }}" required>{{ b.label }}</label>{% endfor %}
+            </div>
+        {% endif %}
+        <div class="choices"{% if q.estimate %} data-after-estimate hidden{% endif %}>
+            {% for c in choices %}
+                <label class="choice"><input type="radio" name="choice" value="{{ forloop.counter0 }}"{% if att and att.response == c.label %} checked{% endif %}><span class="letter">{{ forloop.counter0|letter }}</span><span>{{ c.label }}</span></label>
+            {% endfor %}
+        </div>
+        <div class="q-tools">
+            <label class="check" style="margin:0">Reference used
+                <select name="cited_reference">
+                    <option value="">—</option>
+                    {% for r in references %}<option value="{{ r.short_name }}"{% if att.cited_reference == r.short_name %} selected{% endif %}>{{ r.short_name }}</option>{% endfor %}
+                </select>
+            </label>
+            {% if not session.is_exam_style and not shown_steps and not no_hints %}
+                <button class="link-btn" type="button" data-hint>Show a hint (half credit)</button>
+            {% endif %}
+        </div>
+        {% if not session.is_exam_style and not shown_steps and not no_hints %}
+            <div class="hint-box" data-hint-text hidden><strong>Hint:</strong> {{ instance.steps.0.text }}</div>
+        {% endif %}
+    {% elif q.type == "lookup" %}
+        <p class="q-stem">{{ drill.prompt }}</p>
+        <p class="small muted">Where would you look? Target: {{ drill.seconds_target }} seconds.</p>
+        <div class="choices">
+            {% for o in q.options %}<label class="choice"><input type="radio" name="choice" value="{{ forloop.counter0 }}"{% if att and att.response == o %} checked{% endif %}><span class="letter">{{ forloop.counter0|letter }}</span><span>{{ o }}</span></label>{% endfor %}
+        </div>
+    {% elif q.type == "method" %}
+        <p class="q-stem">{{ instance.stem }}</p>
+        <p class="small muted">Don't solve it. Which method does this question call for?</p>
+        <div class="choices">
+            {% for o in q.options %}<label class="choice"><input type="radio" name="choice" value="{{ forloop.counter0 }}"><span class="letter">{{ forloop.counter0|letter }}</span><span>{{ o.label }}</span></label>{% endfor %}
+        </div>
+    {% elif q.type == "spot_error" %}
+        <p class="q-stem">{{ instance.stem }}</p>
+        <p class="small muted">One step of this worked solution is wrong. Which one?</p>
+        {% for s in flawed_steps %}
+            <label class="step-pick"><input type="radio" name="choice" value="{{ s.i }}"><span><strong>Step {{ forloop.counter }}.</strong> {{ s.text }}</span></label>
+        {% endfor %}
+    {% elif q.type == "units" %}
+        <p class="q-stem">Convert <strong>{{ uq.value }} {{ uq.src }}</strong> to <strong>{{ uq.dst }}</strong>.</p>
+        <div class="field" style="max-width:240px"><label for="u-val">Answer in {{ uq.dst }}</label><input id="u-val" type="text" inputmode="decimal" name="value" autocomplete="off" autofocus></div>
+    {% endif %}
+
+    <div class="q-actions">
+        {% if session.is_exam_style %}
+            <div class="actions">
+                <button class="btn" name="action" value="prev"{% if position == 0 %} disabled{% endif %}>Previous</button>
+                <button class="btn" name="action" value="flag" formnovalidate>{% if position in session.flags %}Unflag{% else %}Flag for review{% endif %}</button>
+            </div>
+            <div class="actions">
+                {% if number < total %}<button class="btn btn-primary" name="action" value="next">Save and next</button>{% endif %}
+                <button class="btn{% if number == total %} btn-primary{% endif %}" name="action" value="finish" data-confirm-title="Submit the session?" data-confirm="Unanswered questions count as wrong, and you can't change answers after this." data-confirm-ok="Submit" data-confirm-tone="danger">Submit session</button>
+            </div>
+        {% else %}
+            <span></span>
+            <button class="btn btn-primary" name="action" value="answer">Check answer</button>
+        {% endif %}
+    </div>
+</form>

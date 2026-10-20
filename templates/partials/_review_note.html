@@ -1,0 +1,6 @@
+{# Who reviewed this content, or that no licensed PE has yet. `obj` has the review fields. #}
+<p class="review-note">
+    {% include "partials/_review_badge.html" with state=obj.review_state %}
+    {% if obj.review_state == "approved" %}<span>Reviewed by {{ obj.reviewer }}, {{ obj.reviewer_license }}, on {{ obj.reviewed_on|date:"M j, Y" }}.</span>
+    {% else %}<span>{{ what|default:"This content" }} hasn't been checked by a licensed PE yet. <a href="{% url 'learning:help' %}#content">How content is checked</a></span>{% endif %}
+</p>

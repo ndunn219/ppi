@@ -1,0 +1,20 @@
+{# Create a share link for this report. #}
+<section class="card no-print">
+    <div class="card-head"><h2>Share this report</h2></div>
+    <form method="post" action="{% url 'reports:share' %}" class="stack">
+        {% csrf_token %}<input type="hidden" name="kind" value="{{ kind }}">
+        {% if session %}<input type="hidden" name="simulation" value="{{ session.id }}">{% endif %}
+        <div class="form-row">
+            <div><label for="rcp">Who is it for?</label><input id="rcp" type="text" name="recipient" placeholder="e.g. my supervising PE"></div>
+            <div><label for="days">Link expires after</label><select id="days" name="days">{% for v, l in expiry_choices %}<option value="{{ v }}"{% if v == 30 %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+        </div>
+        {% if section_choices %}
+            <fieldset style="border:0;padding:0;margin:0"><legend class="small" style="font-weight:600;margin-bottom:6px">Include</legend>
+                <div class="form-row">{% for k, l in section_choices %}<label class="check"><input type="checkbox" name="sections" value="{{ k }}" checked> {{ l }}</label>{% endfor %}</div>
+            </fieldset>
+            <label class="check"><input type="checkbox" name="live" value="1"> Live: the link always shows current data (otherwise it shows today's snapshot)</label>
+        {% endif %}
+        <div><button class="btn btn-primary" type="submit">Create share link</button></div>
+        <p class="note">Anyone with the link can view it until it expires or you revoke it. It shows only work you did in this course.</p>
+    </form>
+</section>

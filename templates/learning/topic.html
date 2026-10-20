@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}{{ item.name }}{% endblock %}
+{% block crumbs %}<div class="crumbs"><a href="{% url 'learning:topics' %}">Topics</a> / {{ item.area.name }}</div>{% endblock %}
+{% block page_title %}<h1>{{ item.name }}</h1><p class="subtitle">{{ item.summary }}</p>
+    <p class="review-note" style="margin-top:6px">{% include "partials/_review_badge.html" with state=content_review.state %}<span>{{ content_review.approved }} of {{ content_review.total }} parts of this topic reviewed by a licensed PE. <a href="{% url 'learning:help' %}#content">How content is checked</a></span></p>{% endblock %}
+{% block page_actions %}
+    <a class="btn" href="{% url 'learning:tutorial' item.code %}">Tutorial</a>
+    <a class="btn btn-primary" href="{% url 'learning:study' item.code %}">{% if lp.stage == "done" %}Review the lesson{% elif lp %}Continue the lesson{% else %}Start the lesson{% endif %}</a>
+{% endblock %}
+{% block content %}
+<section class="kpis">
+    <div class="kpi"><span class="kpi-label">Mastery</span><span>{% level_badge m.level m.decayed %}</span><span class="kpi-foot">{% if m.decayed %}Review overdue: dropped one level until confirmed{% else %}From problems solved without hints{% endif %}</span></div>
+    <div class="kpi"><span class="kpi-label">Accuracy</span><span class="kpi-value">{{ m.accuracy|pct }}</span><span class="kpi-foot">last {{ m.attempts_counted|floatformat:"-1" }} counted attempts</span></div>
+    <div class="kpi"><span class="kpi-label">Median time</span><span class="kpi-value">{{ m.median_seconds|minutes }}</span><span class="kpi-foot">target 6 min</span></div>
+    <div class="kpi"><span class="kpi-label">Right reference</span><span class="kpi-value">{{ m.lookup_rate|pct }}</span><span class="kpi-foot">citations and lookup drills</span></div>
+    <div class="kpi"><span class="kpi-label">Next review</span><span class="kpi-value" style="font-size:18px">{{ review.due|date:"M j"|default:"—" }}</span><span class="kpi-foot">{% if review %}rung {{ review.rung|add:1 }} of 5{% else %}after your first problem{% endif %}</span></div>
+</section>
+<div class="grid">
+    <section class="card span-2">
+        <div class="card-head"><h2>Practice this topic</h2></div>
+        <div class="modes">
+            <form class="mode" method="post" action="{% url 'learning:start' %}">{% csrf_token %}<input type="hidden" name="item" value="{{ item.code }}"><input type="hidden" name="back" value="{{ request.path }}">
+                <h3>Parametric drill</h3><p>Four problems in a row with new numbers.</p><button class="btn btn-small" name="kind" value="drill">Start</button></form>
+            <form class="mode" method="post" action="{% url 'learning:start' %}">{% csrf_token %}<input type="hidden" name="item" value="{{ item.code }}"><input type="hidden" name="back" value="{{ request.path }}">
+                <h3>Estimate first</h3><p>Pick a range, then solve.</p><button class="btn btn-small" name="kind" value="estimate">Start</button></form>
+            <form class="mode" method="post" action="{% url 'learning:start' %}">{% csrf_token %}<input type="hidden" name="item" value="{{ item.code }}"><input type="hidden" name="back" value="{{ request.path }}">
+                <h3>Spot the error</h3><p>Find the wrong step.</p><button class="btn btn-small" name="kind" value="spot_error">Start</button></form>
+            <form class="mode" method="post" action="{% url 'learning:start' %}">{% csrf_token %}<input type="hidden" name="item" value="{{ item.code }}"><input type="hidden" name="back" value="{{ request.path }}">
+                <h3>Lookup sprint</h3><p>Where does it live?</p><button class="btn btn-small" name="kind" value="lookup">Start</button></form>
+            <a class="mode" href="{% url 'learning:cards' %}?item={{ item.code }}" style="text-decoration:none;color:inherit"><h3>Flashcards</h3><p>{{ cards|length }} cards for this topic.</p><span class="btn btn-small">Open</span></a>
+            <a class="mode" href="{% url 'learning:explain' %}?item={{ item.code }}" style="text-decoration:none;color:inherit"><h3>Explain it back</h3><p>Why does a step work?</p><span class="btn btn-small">Open</span></a>
+        </div>
+        {% if replays %}<p class="note">{{ replays|length }} open error replay{{ replays|length|pluralize }} on this topic. <a href="{% url 'learning:errors' %}">Error journal</a></p>{% endif %}
+    </section>
+    <section class="card">
+        <div class="card-head"><h2>Where it lives</h2></div>
+        {% for loc in locations %}
+            <div class="refcard">
+                <strong>{{ loc.reference.short_name }}</strong>
+                <span class="secondary small">{{ loc.locator }}</span>
+                <div class="small">{{ loc.what_is_there }}</div>
+                {% if loc.search_term_list %}<div class="terms">{% for t in loc.search_term_list %}<span class="term">{{ t }}</span>{% endfor %}</div>{% endif %}
+            </div>
+        {% endfor %}
+        {% if item.cue_list %}
+            <h3 style="margin-top:12px">Cues in a question</h3>
+            <div class="cues">{% for c in item.cue_list %}<span class="badge">{{ c }}</span>{% endfor %}</div>
+        {% endif %}
+    </section>
+</div>
+<section class="card">
+    <div class="card-head"><h2>Your recent attempts</h2></div>
+    {% if attempts %}
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>When</th><th>Type</th><th>Result</th><th>Cause</th><th class="r">Time</th><th>Hint</th></tr></thead>
+        <tbody>{% for a in attempts %}
+            <tr><td>{{ a.created_at|date:"M j, g:i a" }}</td><td>{{ a.get_kind_display }}</td>
+                <td>{% if a.is_correct %}<span class="badge badge-good">Correct</span>{% elif a.response %}<span class="badge badge-bad">Missed</span>{% else %}<span class="badge">Blank</span>{% endif %}</td>
+                <td class="secondary">{{ a.get_cause_display|default:"" }}</td><td class="r">{{ a.seconds|minutes }}</td><td>{% if a.hint_used %}Yes{% endif %}</td></tr>
+        {% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="empty">No attempts yet.</p>{% endif %}
+</section>
+{% endblock %}

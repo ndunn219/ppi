@@ -1,0 +1,11 @@
+{% load course %}
+{# The readiness estimate: the likely range as a band, the middle as a bar, the target dashed. #}
+{% if low is not None %}
+<div class="range" role="img" aria-label="Likely score {{ low|pct }} to {{ high|pct }}; working target {{ target|pct }}">
+    <div class="range-track"></div>
+    <div class="range-band" style="left: {{ low|times:100 }}%; width: calc({{ high|times:100 }}% - {{ low|times:100 }}%)"></div>
+    <div class="range-mid" style="left: {{ mid|times:100 }}%"></div>
+    <div class="range-target" style="left: {{ target|times:100 }}%"><span>Target {{ target|pct }}</span></div>
+    <div class="range-ticks"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+</div>
+{% endif %}

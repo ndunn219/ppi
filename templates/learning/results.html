@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}Results{% endblock %}
+{% block crumbs %}<div class="crumbs"><a href="{% url 'learning:practice' %}">Practice</a> / {{ session.get_kind_display }}</div>{% endblock %}
+{% block page_title %}<h1>{{ r.correct }} of {{ r.total }} correct</h1><p class="subtitle">{{ session.get_kind_display }}{% if session.spec_item %} · {{ session.spec_item.name }}{% endif %} · {{ r.seconds|clock }} in total</p>{% endblock %}
+{% block page_actions %}
+    {% if session.kind == "full_exam" or session.kind == "half_exam" or session.kind == "diagnostic" or session.kind == "timed_block" %}<a class="btn btn-primary" href="{% url 'reports:simulation' session.id %}">Full report</a>{% endif %}
+    {% if session.kind == "diagnostic" %}<a class="btn btn-primary" href="{% url 'learning:plan' %}">See your plan</a>{% endif %}
+    <a class="btn" href="{% url 'learning:practice' %}">More practice</a>
+{% endblock %}
+{% block content %}
+<section class="kpis">
+    <div class="kpi"><span class="kpi-label">Score</span><span class="kpi-value">{{ r.score|pct }}</span><span class="kpi-foot">{{ r.correct }} of {{ r.total }}</span></div>
+    <div class="kpi"><span class="kpi-label">Time per question</span><span class="kpi-value">{{ r.avg_seconds|minutes }}</span><span class="kpi-foot">average; target 6 min</span></div>
+    <div class="kpi"><span class="kpi-label">Misses by cause</span><span class="kpi-value">{{ r.by_cause|length }}</span><span class="kpi-foot">{% for c in r.by_cause %}{{ c.cause }} {{ c.n }}{% if not forloop.last %} · {% endif %}{% empty %}none{% endfor %}</span></div>
+</section>
+<div class="grid grid-2">
+    <section class="card">
+        <div class="card-head"><h2>By area</h2></div>
+        {% for row in r.by_area %}
+            <div class="bar-row"><span>{{ row.area.name }} <span class="muted small">({{ row.n }})</span></span><div class="bar{% if row.accuracy < 0.5 %} bad{% elif row.accuracy < 0.7 %} amber{% endif %}"><i style="width:{{ row.accuracy|times:100 }}%"></i></div><span class="r">{{ row.accuracy|pct }}</span></div>
+        {% empty %}<p class="empty">No area data.</p>{% endfor %}
+    </section>
+    <section class="card">
+        <div class="card-head"><h2>What to do next</h2></div>
+        {% for name, kind, why, c in fixes %}
+            <form method="post" action="{% url 'learning:start' %}" class="bar-row" style="grid-template-columns:1fr auto">{% csrf_token %}<input type="hidden" name="kind" value="{{ kind }}">
+                <span><strong>{{ c.cause }}</strong> ({{ c.n }}): {{ why }}</span><button class="btn btn-small">{{ name }}</button></form>
+        {% empty %}<p class="empty">No misses to fix. Move on, or try a harder mode.</p>{% endfor %}
+    </section>
+</div>
+<section class="card">
+    <div class="card-head"><h2>Every question</h2></div>
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>#</th><th>Topic</th><th>Your answer</th><th>Result</th><th>Cause</th><th class="r">Time</th><th></th></tr></thead>
+        <tbody>{% for a in r.attempts %}
+            <tr><td class="muted">{{ a.position|add:1 }}</td><td>{{ a.spec_item.name|default:"Units" }}</td><td>{{ a.response|default:"—"|truncatechars:40 }}</td>
+                <td>{% if a.is_correct %}<span class="badge badge-good">Correct</span>{% elif a.response %}<span class="badge badge-bad">Missed</span>{% else %}<span class="badge">Blank</span>{% endif %}</td>
+                <td class="secondary">{{ a.get_cause_display }}</td><td class="r">{{ a.seconds|clock }}</td>
+                <td class="r"><a href="{% url 'learning:session' session.id %}?q={{ a.position }}">Review</a></td></tr>
+        {% endfor %}</tbody>
+    </table></div>
+</section>
+{% endblock %}

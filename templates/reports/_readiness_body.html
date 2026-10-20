@@ -1,0 +1,108 @@
+{% load course %}
+{# Shared by the student's own page and the public link. `sections` lists what to show. #}
+{% if "estimate" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Readiness estimate</h2><span class="zone zone-{{ d.estimate.zone }}">{{ d.estimate.zone_label }}</span></div>
+    {% if d.estimate.mid is not None %}
+        <p class="lead" style="margin-bottom:4px">Likely score range <strong>{{ d.estimate.low|pct }} to {{ d.estimate.high|pct }}</strong> correct, against a working target of {{ d.estimate.target|pct }}.</p>
+        {% include "partials/_range.html" with low=d.estimate.low mid=d.estimate.mid high=d.estimate.high target=d.estimate.target %}
+    {% endif %}
+    <p class="secondary">{{ d.estimate.reason }}</p>
+    <p class="note">This is a guesstimate, not a prediction or a guarantee. It comes from {{ d.estimate.evidence }} problems solved in the course{% if d.estimate.full_sims %} and {{ d.estimate.full_sims }} full simulation{{ d.estimate.full_sims|pluralize }}{% endif %}. NCEES does not publish a fixed passing percentage; the target line is the course's working assumption.</p>
+    {% if trend %}
+        <svg class="chart" viewBox="0 0 {{ trend.width }} {{ trend.height }}" role="img" aria-label="Readiness range over time, {{ trend.first }} to {{ trend.last }}">
+            {% for t in trend.ticks %}<line class="grid-line" x1="{{ trend.left }}" x2="{{ trend.right }}" y1="{{ t.y }}" y2="{{ t.y }}"/><text class="tick" x="{{ trend.left|add:-6 }}" y="{{ t.y }}" text-anchor="end" dominant-baseline="middle">{{ t.label }}</text>{% endfor %}
+            <polygon class="band" points="{{ trend.band }}"/>
+            <line class="line-amber" x1="{{ trend.left }}" x2="{{ trend.right }}" y1="{{ trend.target_y }}" y2="{{ trend.target_y }}"/>
+            <polyline class="line" points="{{ trend.line }}"/>
+            {% for p in trend.dots %}<circle class="dot" cx="{{ p.x }}" cy="{{ p.y }}" r="3"><title>{{ p.date }}: {{ p.mid|pct }}</title></circle>{% endfor %}
+            <text class="tick" x="{{ trend.left }}" y="{{ trend.label_y }}">{{ trend.first }}</text>
+            <text class="tick" x="{{ trend.right }}" y="{{ trend.label_y }}" text-anchor="end">{{ trend.last }}</text>
+        </svg>
+        <p class="note">Shaded: likely range by day. Line: middle estimate. Dashed: working target.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+{% if "coverage" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Coverage map</h2><span class="muted small">{{ d.coverage_practicing|pct }} of exam weight at Practicing or above · {{ d.coverage_proficient|pct }} at Proficient</span></div>
+    <div class="covmap">
+        {% for a in d.coverage %}
+            <div class="cov-area"><div class="cov-area-name">{{ a.area }}<small>{{ a.weight|pct }} of exam</small></div>
+                <div class="cov-tiles">{% for i in a.items %}<span class="cov-tile lvl-{{ i.level }}" title="{{ i.name }}: {{ i.level_name }}{% if i.decayed %} (review overdue){% endif %}">{{ i.code }}</span>{% endfor %}</div></div>
+        {% endfor %}
+    </div>
+    <div class="legend">{% for n in "01234" %}{% level_badge n %}{% endfor %}</div>
+</section>
+{% endif %}
+
+<div class="grid grid-2">
+{% if "accuracy" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Demonstrated accuracy</h2><span class="muted small">new-number problems, by area</span></div>
+    {% for a in d.accuracy %}
+        <div class="bar-row"><span>{{ a.area }} <span class="muted small">({{ a.n }})</span></span>
+            {% if a.accuracy is not None %}<div class="bar{% if a.accuracy < 0.5 %} bad{% elif a.accuracy < 0.7 %} amber{% endif %}"><i style="width:{{ a.accuracy|times:100 }}%"></i></div><span class="r">{{ a.accuracy|pct }}</span>
+            {% else %}<span class="muted small">no evidence yet</span><span></span>{% endif %}</div>
+    {% endfor %}
+    <p class="note">The number in brackets is how many problems each figure rests on.</p>
+</section>
+{% endif %}
+{% if "pace" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Pace</h2><span class="muted small">median minutes per question · target {{ d.pace_target|floatformat:0 }}</span></div>
+    {% for a in d.pace %}
+        <div class="bar-row"><span>{{ a.area }}</span>
+            {% if a.minutes is not None %}<div class="bar{% if a.minutes > d.pace_target %} amber{% endif %}"><i style="width:{% widthratio a.minutes 12 100 %}%"></i></div><span class="r">{{ a.minutes }} min</span>
+            {% else %}<span class="muted small">no evidence yet</span><span></span>{% endif %}</div>
+    {% endfor %}
+</section>
+{% endif %}
+{% if "lookup" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Lookup skill</h2></div>
+    <div class="bar-row"><span>Right reference cited</span>{% if d.lookup.cited_rate is not None %}<div class="bar"><i style="width:{{ d.lookup.cited_rate|times:100 }}%"></i></div><span class="r">{{ d.lookup.cited_rate|pct }}</span>{% else %}<span class="muted small">none cited</span><span></span>{% endif %}</div>
+    <div class="bar-row"><span>Lookup sprint accuracy</span>{% if d.lookup.drill_rate is not None %}<div class="bar"><i style="width:{{ d.lookup.drill_rate|times:100 }}%"></i></div><span class="r">{{ d.lookup.drill_rate|pct }}</span>{% else %}<span class="muted small">no sprints</span><span></span>{% endif %}</div>
+    <p class="note">{{ d.lookup.cited_n }} citations · {{ d.lookup.drill_n }} lookup questions{% if d.lookup.drill_seconds is not None %} · median {{ d.lookup.drill_seconds|floatformat:0 }} s to find{% endif %}.</p>
+</section>
+{% endif %}
+{% if "errors" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Error profile</h2><span class="muted small">misses by cause</span></div>
+    {% if d.errors %}
+    <div class="table-wrap"><table class="table"><thead><tr><th>Cause</th><th class="r">Last 14 days</th><th class="r">Before</th></tr></thead>
+        <tbody>{% for e in d.errors %}<tr><td>{{ e.cause }}</td><td class="r">{{ e.recent }}</td><td class="r">{{ e.earlier }}</td></tr>{% endfor %}</tbody></table></div>
+    {% else %}<p class="empty">No misses recorded.</p>{% endif %}
+</section>
+{% endif %}
+</div>
+
+{% if "simulations" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Simulation history</h2></div>
+    {% if d.simulations %}
+    <div class="table-wrap"><table class="table"><thead><tr><th>Date</th><th>Type</th><th class="r">Questions</th><th class="r">Score</th></tr></thead>
+        <tbody>{% for s in d.simulations %}<tr><td>{{ s.date }}</td><td>{{ s.kind }}</td><td class="r">{{ s.questions }}</td><td class="r">{{ s.score|pct }}</td></tr>{% endfor %}</tbody></table></div>
+    {% else %}<p class="empty">No full or half simulations yet.</p>{% endif %}
+</section>
+{% endif %}
+
+<div class="grid grid-2">
+{% if "focus" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Recommended focus</h2><span class="muted small">would raise the estimate most per hour</span></div>
+    {% for f in d.focus %}<div class="bar-row"><span>{{ f.name }}</span><div class="bar amber"><i style="width:{{ f.p|times:100 }}%"></i></div><span class="r">{{ f.p|pct }}</span></div>{% empty %}<p class="empty">Nothing stands out.</p>{% endfor %}
+</section>
+{% endif %}
+{% if "study" in sections %}
+<section class="card">
+    <div class="card-head"><h2>Study record</h2><span class="muted small">context, not evidence</span></div>
+    <div class="bar-row"><span>Hours of practice</span><span></span><span class="r">{{ d.study.hours }}</span></div>
+    <div class="bar-row"><span>Active days</span><span></span><span class="r">{{ d.study.active_days }}</span></div>
+    <div class="bar-row"><span>Current streak</span><span></span><span class="r">{{ d.study.streak }} day{{ d.study.streak|pluralize }}</span></div>
+    <div class="bar-row"><span>Lessons completed</span><span></span><span class="r">{{ d.study.lessons_done }}</span></div>
+    <div class="bar-row"><span>Answers given</span><span></span><span class="r">{{ d.study.attempts }}</span></div>
+</section>
+{% endif %}
+</div>

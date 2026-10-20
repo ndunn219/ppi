@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static course django_docutils %}
+{% block title %}{{ item.name }}{% endblock %}
+{% block extra_head %}{% if blocks %}<script src="{% static 'js/tutorials.js' %}?v={{ asset_version }}" defer></script>{% if widget_script %}<script src="{% static widget_script %}?v={{ asset_version }}" defer></script>{% endif %}{% endif %}{% endblock %}
+{% block crumbs %}<div class="crumbs"><a href="{% url 'learning:topics' %}">Topics</a> / <a href="{% url 'learning:topic' item.code %}">{{ item.name }}</a></div>{% endblock %}
+{% block page_title %}<h1>{{ item.name }}</h1><p class="subtitle">You never go more than 10 minutes without solving something.</p>{% endblock %}
+{% block content %}
+<nav class="loop" aria-label="Lesson steps">
+    {% for s in loop_state %}
+        {% if s.url %}<a class="is-{{ s.state }}{% if s.viewing %} is-viewing{% endif %}" href="{{ s.url }}" title="{{ s.desc }}"{% if s.viewing %} aria-current="step"{% endif %}>{{ s.number }}. {{ s.label }}</a>
+        {% else %}<span class="is-locked" title="{{ s.desc }} Unlocks after the steps before it.">{{ s.number }}. {{ s.label }}</span>{% endif %}
+    {% endfor %}
+    <a class="loop-help" href="{% url 'learning:help' %}#lesson-loop">How the lesson loop works</a>
+</nav>
+
+{% if review %}
+    <div class="review-banner">
+        <span>You're looking back at <strong>{{ review.label }}</strong>. Your progress is saved.</span>
+        <a class="btn btn-primary btn-small" href="{{ current.url }}">Back to {{ current.label|lower }}</a>
+    </div>
+    {% if review.key == "learn" %}
+        <div class="grid" style="align-items:start">
+            <div class="span-2">{% include "partials/_tutorial.html" %}</div>
+            {% include "partials/_tutorial_side.html" %}
+        </div>
+    {% elif review.key == "done" %}
+        <section class="card" style="max-width:760px"><h2>Schedule</h2>
+            <p>Mastery: {% level_badge summary.mastery.level summary.mastery.decayed %}</p>
+            {% if summary.review %}<p class="secondary">Next spaced review on <strong>{{ summary.review.due|date:"l, M j" }}</strong>.</p>{% endif %}</section>
+    {% else %}
+        {% if worked %}
+            <section class="card" style="max-width:820px;margin-bottom:16px">
+                <div class="card-head"><h2>Worked example</h2><span class="badge">A fresh one, with every step</span></div>
+                <p class="q-stem">{{ worked.stem }}</p>
+                <ol class="steps">{% for st in worked.steps %}<li>{{ st.text }}</li>{% endfor %}</ol>
+                <p><strong>Answer: {{ worked.answer_label }}</strong></p>
+            </section>
+        {% endif %}
+        {% for a in answered %}
+            <section class="card review-item" style="max-width:820px">
+                <div class="card-head">
+                    <h3>{% if a.q.stage == "testout" %}Test-out question{% elif a.q.stage == "fade" %}Worked example, step {{ a.q.fade|add:1 }}{% elif a.q.stage == "try" %}Try it yourself{% elif a.run > 1 %}Recall check{% else %}Cold try{% endif %}
+                        <span class="muted small" style="font-family:var(--font-body);font-weight:500">· {{ a.att.created_at|date:"M j" }}{% if runs > 1 %} · time {{ a.run }} through the lesson{% endif %}</span></h3>
+                    {% if a.att.is_correct %}<span class="badge badge-good">Correct</span>{% else %}<span class="badge badge-bad">Missed{% if a.att.cause %} · {{ a.att.get_cause_display }}{% endif %}</span>{% endif %}
+                </div>
+                <p class="q-stem">{{ a.instance.stem }}</p>
+                <div class="choices">
+                    {% for c in a.instance.choices %}<div class="choice {% if not c.cause %}is-correct{% elif a.chosen == c.label %}is-wrong{% endif %}"><span class="letter">{{ forloop.counter0|letter }}</span><span>{{ c.label }}</span>{% if a.chosen == c.label %}<span class="why">your answer{% if c.cause %}: {{ c.note }}{% endif %}</span>{% endif %}</div>{% endfor %}
+                </div>
+                <details><summary class="small"><strong>Verified solution</strong></summary><ol class="steps" style="margin-top:8px">{% for st in a.instance.steps %}<li>{{ st.text }}</li>{% endfor %}</ol></details>
+            </section>
+        {% empty %}
+            <section class="card" style="max-width:820px">
+                <p class="empty">{% if review.key == "prime" %}There's no cold try on record for this topic.{% elif review.key == "fade" %}There are no worked-example answers on record for this topic.{% else %}There are no "Try it yourself" answers on record for this topic.{% endif %}</p>
+                <p class="note">{% if runs %}This step wasn't answered when you went through the lesson.{% else %}This topic was marked as studied without going through the lesson steps, so they weren't recorded.{% endif %} <a href="{% url 'learning:topic' item.code %}">Practice this topic</a> to see where you stand.</p>
+            </section>
+        {% endfor %}
+    {% endif %}
+{% else %}
+
+{% if lp.stage == "done" %}
+    <div class="grid grid-2">
+        <section class="card">
+            <h2>{% if lp.tested_out %}Tested out{% else %}Lesson complete{% endif %}</h2>
+            {% if summary.tries %}<p class="secondary">You solved {{ summary.correct }} of {{ summary.tries|length }} try problems without hints.</p>{% endif %}
+            <p>Mastery now: {% level_badge summary.mastery.level summary.mastery.decayed %}</p>
+            {% if summary.review %}<p class="secondary">This topic comes back for spaced review on <strong>{{ summary.review.due|date:"l, M j" }}</strong>, then after 3, 7, 14 and 30 days, sooner after a miss.</p>{% endif %}
+            <div class="actions">
+                <a class="btn btn-primary" href="{% url 'learning:topic' item.code %}">Topic page</a>
+                <form method="post" action="{% url 'learning:study_next' item.code %}">{% csrf_token %}<button class="btn" name="action" value="restart" title="Starts with a recall check: get it right and you can test out.">Redo the lesson</button></form>
+            </div>
+        </section>
+        <section class="card">
+            <h2>Fix what slipped</h2>
+            {% if summary.fix %}
+                <p class="secondary">Most of your misses were {{ summary.causes.0|lower }}. {{ summary.fix.2 }}</p>
+                <form method="post" action="{% url 'learning:start' %}">{% csrf_token %}<input type="hidden" name="kind" value="{{ summary.fix.1 }}"><input type="hidden" name="item" value="{{ item.code }}"><button class="btn btn-small">Start: {{ summary.fix.0 }}</button></form>
+            {% else %}<p class="empty">No misses. Your flashcards for this topic are now in the daily queue.</p>{% endif %}
+        </section>
+    </div>
+
+{% elif lp.stage == "learn" %}
+    <div class="grid" style="align-items:start">
+        <div class="span-2">
+            {% if blocks %}
+                <p class="t-progress" style="margin-bottom:4px">Interactive tutorial · about {{ lesson.minutes }} minutes · <span data-tutorial-progress>{{ activity_count }} activities</span></p>
+                {% include "partials/_review_note.html" with obj=lesson what="This tutorial" %}
+                {% include "partials/_tutorial.html" %}
+            {% else %}
+                <section class="card"><div class="lesson">{% with content=lesson.body %}{% rst content show_title=False %}{% endwith %}</div></section>
+            {% endif %}
+            <form method="post" action="{% url 'learning:study_next' item.code %}" class="card" style="margin-top:20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">{% csrf_token %}
+                <span class="secondary">Done with the tutorial? Next, a worked example that fades into problems you solve yourself.</span>
+                <button class="btn btn-primary">Next: worked example</button>
+            </form>
+        </div>
+        {% include "partials/_tutorial_side.html" %}
+    </div>
+
+{% elif lp.stage == "fade" and lp.fade_level == 0 %}
+    <section class="card" style="max-width:820px">
+        <div class="card-head"><h2>Worked example</h2><span class="badge">Step 1 of 3: read it all</span></div>
+        <p class="q-stem">{{ worked.stem }}</p>
+        <ol class="steps">{% for s in worked.steps %}<li>{{ s.text }}</li>{% endfor %}</ol>
+        <p><strong>Answer: {{ worked.answer_label }}</strong></p>
+        <p class="note">Next, the same kind of problem with the last step blank, then with only the first step given.</p>
+        <form method="post" action="{% url 'learning:study_next' item.code %}">{% csrf_token %}<button class="btn btn-primary">I follow it. Next</button></form>
+    </section>
+
+{% else %}
+    <div class="runner">
+        <div>
+            <section class="card">
+                <div class="q-num">
+                    {% if lp.stage == "prime" and redo %}Recall check: what do you remember from last time?
+                    {% elif lp.stage == "prime" %}Cold try: try it before any teaching. A miss is expected.
+                    {% elif lp.stage == "testout" %}Test-out {{ stage_count }} of {{ stage_total }}: correct and on pace
+                    {% elif lp.stage == "fade" %}Worked example, step {{ lp.fade_level|add:1 }} of 3
+                    {% else %}Try {{ stage_count }} of {{ stage_total }}: new numbers, no hints{% endif %}
+                </div>
+                {% if att %}
+                    <p class="q-stem">{{ instance.stem }}</p>
+                {% else %}
+                    {% url 'learning:study_answer' item.code as action %}
+                    {% include "partials/_question.html" with action=action no_hints=True %}
+                {% endif %}
+            </section>
+            {% if att %}
+                {% include "partials/_feedback.html" %}
+                <form method="post" action="{% url 'learning:study_next' item.code %}" class="actions" style="margin-top:16px;justify-content:flex-end">{% csrf_token %}
+                    {% if lp.stage == "prime" and att.is_correct %}<button class="btn" name="action" value="testout">I know this: test out</button>{% endif %}
+                    <button class="btn btn-primary" name="action" value="next">{% if lp.stage == "prime" %}Start the lesson{% elif lp.stage == "try" and stage_count >= stage_total %}Finish and schedule{% else %}Continue{% endif %}</button>
+                </form>
+            {% endif %}
+        </div>
+        {% include "partials/_refpanel.html" %}
+    </div>
+{% endif %}
+{% if previous_step and previous_step.url %}<p style="margin-top:16px"><a class="btn btn-ghost btn-small" href="{{ previous_step.url }}">← Previous step: {{ previous_step.label }}</a></p>{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,68 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}PE Prep{% endblock %} · PE Prep</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v={{ asset_version }}">
+    <script src="{% static 'js/app.js' %}?v={{ asset_version }}" defer></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+{% include "partials/_icons.html" %}
+<div class="app">
+    <aside class="sidebar" data-sidebar>
+        <div class="sidebar-top">
+            <a class="brand" href="{% url 'learning:dashboard' %}">
+                <span class="wordmark">PE<span>/</span>Prep</span>
+                <span class="brand-label">Transportation</span>
+            </a>
+            <button class="btn btn-ghost btn-small menu-toggle" type="button" data-menu-toggle aria-expanded="false">
+                <svg width="18" height="18" style="stroke:currentColor;fill:none;stroke-width:2"><use href="#i-menu"></use></svg> Menu
+            </button>
+        </div>
+        <nav class="nav" aria-label="Course">
+            {% for item in nav_items %}
+                <a class="nav-item{% if item.active %} is-active{% endif %}" href="{{ item.href }}"{% if item.active %} aria-current="page"{% endif %}>
+                    <svg aria-hidden="true"><use href="#{{ item.icon }}"></use></svg>
+                    <span>{{ item.label }}</span>
+                    {% if item.count %}<span class="nav-count">{{ item.count }}</span>{% endif %}
+                </a>
+            {% endfor %}
+            {% if can_review %}
+                <a class="nav-item{% if request.path|slice:':8' == '/review/' %} is-active{% endif %}" href="{% url 'review:queue' %}">
+                    <svg aria-hidden="true"><use href="#i-bug"></use></svg><span>PE review</span>
+                </a>
+            {% endif %}
+            {% if user.is_staff %}
+                <a class="nav-item" href="{% url 'admin:index' %}">
+                    <svg aria-hidden="true"><use href="#i-gear"></use></svg><span>Admin</span>
+                </a>
+            {% endif %}
+        </nav>
+        <div class="sidebar-foot">
+            <span class="avatar" aria-hidden="true">{{ user.get_username|slice:":1"|upper }}</span>
+            <div class="small">
+                <div>{{ user.get_full_name|default:user.get_username }}</div>
+                <div class="muted">Student</div>
+            </div>
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-ghost btn-small" type="submit">Log out</button></form>
+        </div>
+    </aside>
+    <main class="main">
+        <div class="topbar">
+            <div>
+                {% block crumbs %}{% endblock %}
+                {% block page_title %}{% endblock %}
+            </div>
+            <div class="actions">{% block page_actions %}{% endblock %}</div>
+        </div>
+        {% if messages %}
+            <ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

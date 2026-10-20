@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}<h1>Reports</h1><p class="subtitle">Share what you have demonstrated with an employer, a supervising PE or a study partner. Reports show only work done in the course.</p>{% endblock %}
+{% block content %}
+<div class="grid">
+    <a class="card mode" href="{% url 'reports:readiness' %}" style="color:inherit;text-decoration:none"><span class="mode-icon"><svg><use href="#i-gauge"></use></svg></span><h3>Readiness report</h3><p>The estimate, coverage, accuracy, pace, lookup skill, errors, simulations and focus.</p></a>
+    <a class="card mode" href="{% url 'reports:weekly' %}" style="color:inherit;text-decoration:none"><span class="mode-icon amber"><svg><use href="#i-chart"></use></svg></span><h3>Weekly progress</h3><p>What moved, what slipped, what to do next week.</p></a>
+    <div class="card mode"><span class="mode-icon blue"><svg><use href="#i-timer"></use></svg></span><h3>Simulation reports</h3>
+        {% for s in sims %}<a class="small" href="{% url 'reports:simulation' s.id %}">{{ s.get_kind_display }} · {{ s.finished_at|date:"M j" }}</a>{% empty %}<p>Finish a timed block or simulation to get one.</p>{% endfor %}</div>
+</div>
+<section class="card">
+    <div class="card-head"><h2>Share links</h2></div>
+    {% if shares %}
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Report</th><th>For</th><th>Kind</th><th>Expires</th><th class="r">Views</th><th>Link</th><th></th></tr></thead>
+        <tbody>{% for s in shares %}
+            <tr><td>{{ s.get_kind_display }}</td><td>{{ s.recipient|default:"—" }}</td><td>{% if s.live %}Live{% else %}Snapshot {{ s.created_at|date:"M j" }}{% endif %}</td>
+                <td>{% if s.revoked_at %}<span class="badge">Revoked</span>{% elif s.is_active %}{{ s.expires_at|date:"M j" }}{% else %}<span class="badge">Expired</span>{% endif %}</td>
+                <td class="r">{{ s.views }}</td>
+                <td>{% if s.is_active %}<button class="link-btn small" type="button" data-copy="{{ request.scheme }}://{{ request.get_host }}{% url 'public_report' s.token %}">Copy link</button> · <a class="small" href="{% url 'public_report' s.token %}" target="_blank" rel="noopener">Open</a>{% endif %}</td>
+                <td class="r">{% if s.is_active %}<form method="post" action="{% url 'reports:revoke' s.id %}">{% csrf_token %}<button class="btn btn-ghost btn-small">Revoke</button></form>{% endif %}</td></tr>
+        {% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="empty">No share links yet. Create one from any report.</p>{% endif %}
+</section>
+{% endblock %}

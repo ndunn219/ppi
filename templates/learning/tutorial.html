@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static django_docutils %}
+{% block title %}{{ item.name }}: tutorial{% endblock %}
+{% block extra_head %}
+    <script src="{% static 'js/tutorials.js' %}?v={{ asset_version }}" defer></script>
+    {% if widget_script %}<script src="{% static widget_script %}?v={{ asset_version }}" defer></script>{% endif %}
+{% endblock %}
+{% block crumbs %}<div class="crumbs"><a href="{% url 'learning:topics' %}">Topics</a> / <a href="{% url 'learning:topic' item.code %}">{{ item.name }}</a></div>{% endblock %}
+{% block page_title %}<h1>{{ lesson.title|default:item.name }}</h1><p class="subtitle">Interactive tutorial · about {{ lesson.minutes }} minutes · <span data-tutorial-progress>{{ activity_count }} activities</span></p>{% endblock %}
+{% block page_actions %}<a class="btn btn-primary" href="{% url 'learning:study' item.code %}">{% if lp.stage == "done" %}Practice this topic{% else %}Go to the lesson loop{% endif %}</a>{% endblock %}
+{% block content %}
+{% if lesson %}{% include "partials/_review_note.html" with obj=lesson what="This tutorial" %}{% endif %}
+<div class="grid" style="align-items:start">
+    <div class="span-2">{% include "partials/_tutorial.html" %}</div>
+    {% include "partials/_tutorial_side.html" %}
+</div>
+{% endblock %}

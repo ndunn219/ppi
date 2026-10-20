@@ -1,0 +1,19 @@
+{% load django_docutils %}
+<aside class="stack" style="position:sticky;top:16px">
+    {% if lesson.body %}
+    <section class="card">
+        <h2>Summary</h2>
+        <details><summary class="small">The cheat sheet for this topic</summary>
+            <div class="lesson" style="font-size:14px;margin-top:8px">{% with content=lesson.body %}{% rst content show_title=False %}{% endwith %}</div>
+        </details>
+    </section>
+    {% endif %}
+    <section class="card">
+        <h2>Where it lives</h2>
+        {% for loc in locations %}
+            <div class="refcard"><strong>{{ loc.reference.short_name }}</strong><span class="secondary small">{{ loc.locator }}</span>
+                {% if loc.search_term_list %}<div class="terms">{% for t in loc.search_term_list %}<span class="term">{{ t }}</span>{% endfor %}</div>{% endif %}</div>
+        {% endfor %}
+        {% if item.cue_list %}<h3 style="margin-top:12px">Cues in a question</h3><div class="cues">{% for c in item.cue_list %}<span class="badge">{{ c }}</span>{% endfor %}</div>{% endif %}
+    </section>
+</aside>

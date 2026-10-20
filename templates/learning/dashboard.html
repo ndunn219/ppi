@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load course %}
+{% block title %}Overview{% endblock %}
+{% block page_title %}
+    <h1>{{ greeting }}, {{ user.first_name|default:user.username }}</h1>
+    <p class="subtitle">{% now "l, F j" %}{% if profile.exam_date %} · exam on {{ profile.exam_date|date:"M j" }} ({{ profile.exam_date|timeuntil }}){% endif %}</p>
+{% endblock %}
+{% block page_actions %}
+    <a class="btn" href="{% url 'reports:readiness' %}">Readiness report</a>
+{% endblock %}
+{% block content %}
+<section class="kpis" aria-label="Summary">
+    <div class="kpi">
+        <span class="kpi-label">Readiness</span>
+        <span><span class="zone zone-{{ est.zone }}">{{ est.zone_label }}</span></span>
+        <span class="kpi-foot">{{ est.zone_reason }}</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-label">Likely score</span>
+        <span class="kpi-value">{% if est.mid is not None %}{{ est.low|pct }}–{{ est.high|pct }}{% else %}—{% endif %}</span>
+        <span class="kpi-foot">Working target {{ est.target|pct }} · {{ est.evidence }} problems</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-label">Coverage</span>
+        <span class="kpi-value">{{ est.coverage_practicing|pct }}</span>
+        <span class="kpi-foot">of exam weight at Practicing or above</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-label">Recent accuracy</span>
+        <span class="kpi-value">{{ accuracy|pct }}</span>
+        <span class="kpi-foot">last {{ recent_count }} problems</span>
+    </div>
+    <div class="kpi">
+        <span class="kpi-label">Pace</span>
+        <span class="kpi-value">{{ est.median_pace|minutes }}</span>
+        <span class="kpi-foot">median per question · target 6 min</span>
+    </div>
+</section>
+
+<div class="grid">
+    <section class="card span-2" aria-labelledby="next-h">
+        <div class="card-head"><h2 id="next-h">Up next</h2><span class="badge badge-brand">Phase: {{ phase|title }}</span></div>
+        <h3 style="font-size:17px">{{ next.title }}</h3>
+        <p class="secondary">{{ next.body }}</p>
+        {% if next.post %}
+            <form method="post" action="{% url 'learning:start' %}">
+                {% csrf_token %}<input type="hidden" name="kind" value="{{ next.post }}">
+                {% if next.item %}<input type="hidden" name="item" value="{{ next.item }}">{% endif %}
+                <button class="btn btn-primary" type="submit">Start</button>
+            </form>
+        {% else %}
+            <a class="btn btn-primary" href="{{ next.url }}">Continue</a>
+        {% endif %}
+    </section>
+    <section class="card" aria-labelledby="due-h">
+        <div class="card-head"><h2 id="due-h">Due today</h2></div>
+        <div class="bar-row"><span>Topics to review</span><span></span><a class="r" href="{% url 'learning:practice' %}">{{ due_items }}</a></div>
+        <div class="bar-row"><span>Flashcards</span><span></span><a class="r" href="{% url 'learning:cards' %}">{{ due_cards }}</a></div>
+        <div class="bar-row"><span>Error replays</span><span></span><a class="r" href="{% url 'learning:errors' %}">{{ open_replays }}</a></div>
+    </section>
+</div>
+
+<section class="card" aria-labelledby="road-h" style="margin-bottom:16px">
+    <div class="card-head"><h2 id="road-h">Your road to the exam</h2><span class="muted small">Gates, not dates, move you forward</span></div>
+    <div class="phases">
+        {% for p in phases %}
+            <div class="phase is-{{ p.state }}">
+                <div class="phase-num">{{ p.number }}{% if p.state == "done" %} · done{% elif p.state == "current" %} · you are here{% endif %}</div>
+                <div class="phase-name">{{ p.name }}</div>
+                <div class="phase-weeks">{{ p.weeks }}</div>
+                {% if p.gate %}<div class="phase-gate">{% if p.gate_met %}✓ {% endif %}Gate: {{ p.gate }}</div>{% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</section>
+
+<div class="grid">
+    <section class="card span-2" aria-labelledby="cov-h">
+        <div class="card-head"><h2 id="cov-h"><a href="{% url 'learning:topics' %}">Mastery by topic</a></h2></div>
+        {% include "partials/_covmap.html" %}
+    </section>
+    <section class="card" aria-labelledby="est-h">
+        <div class="card-head"><h2 id="est-h">Readiness estimate</h2></div>
+        {% if est.mid is not None %}
+            {% include "partials/_range.html" with low=est.low mid=est.mid high=est.high target=est.target %}
+            <p class="note">A guesstimate from {{ est.evidence }} problems{% if est.sim_scores %} and {{ est.sim_scores|length }} simulation{{ est.sim_scores|length|pluralize }}{% endif %}. Not a prediction or a guarantee.</p>
+        {% else %}
+            <p class="empty">{{ est.zone_reason }}</p>
+        {% endif %}
+        <h3 style="margin-top:16px">Biggest gains per hour</h3>
+        {% for e in focus %}
+            <div class="bar-row"><a href="{% url 'learning:topic' e.item.code %}">{{ e.item.name }}</a><div class="bar amber"><i style="width:{{ e.p|times:100 }}%"></i></div><span class="r">{{ e.p|pct }}</span></div>
+        {% empty %}<p class="empty">Nothing yet.</p>{% endfor %}
+    </section>
+</div>
+
+<section class="card" aria-labelledby="act-h">
+    <div class="card-head"><h2 id="act-h">Recent sessions</h2><a class="small" href="{% url 'learning:practice' %}">All practice</a></div>
+    {% if sessions %}
+    <div class="table-wrap"><table class="table">
+        <thead><tr><th>Mode</th><th>Topic</th><th>Started</th><th class="r">Questions</th><th></th></tr></thead>
+        <tbody>
+        {% for s in sessions %}
+            <tr>
+                <td>{{ s.get_kind_display }}</td>
+                <td>{{ s.spec_item.name|default:"Mixed" }}</td>
+                <td>{{ s.started_at|date:"M j, g:i a" }}</td>
+                <td class="r">{{ s.items|length }}</td>
+                <td class="r">{% if s.finished_at %}<a href="{% url 'learning:results' s.id %}">Results</a>{% else %}<a href="{% url 'learning:session' s.id %}">Resume</a>{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table></div>
+    {% else %}<p class="empty">No sessions yet.</p>{% endif %}
+</section>
+{% endblock %}

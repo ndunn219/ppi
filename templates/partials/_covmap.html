@@ -1,0 +1,16 @@
+{% load course %}
+<div class="covmap">
+    {% for row in areas %}
+        <div class="cov-area">
+            <div class="cov-area-name">{{ row.area.name }}<small>{{ row.area.weight|pct }} of exam</small></div>
+            <div class="cov-tiles">
+                {% for it, m in row.items %}
+                    <a class="cov-tile lvl-{{ m.level|default:0 }}" href="{% url 'learning:topic' it.code %}" title="{{ it.name }}: {{ m.level|level_name }}">{{ it.code }}</a>
+                {% endfor %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+<div class="legend">
+    {% for n in "01234" %}{% level_badge n %}{% endfor %}
+</div>

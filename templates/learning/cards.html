@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Flashcards{% endblock %}
+{% block page_title %}<h1>Flashcards</h1><p class="subtitle">{% if item_code %}Cards for {{ item_code }}, ahead of schedule.{% else %}{{ stats.due }} due · {{ stats.learned }} of {{ stats.total }} learned. Spaced repetition brings each card back just before you would forget it.{% endif %}</p>{% endblock %}
+{% block page_actions %}{% if item_code %}<a class="btn" href="{% url 'learning:cards' %}">All due cards</a>{% endif %}{% endblock %}
+{% block content %}
+{% if review %}
+    <div class="flashcard" data-flashcard>
+        <div class="flashcard-inner">
+            <div class="flashcard-face">
+                <span class="badge">{{ review.card.spec_item.code }} · {{ review.card.get_kind_display }}</span>
+                <div>{{ review.card.front }}</div>
+                <button class="btn" type="button" data-flip>Show answer <span class="muted small">(space)</span></button>
+            </div>
+            <div class="flashcard-face flashcard-back">
+                <span class="badge badge-brand">{{ review.card.spec_item.name }}</span>
+                <div class="answer">{{ review.card.back }}</div>
+                <span class="muted small">{{ review.card.front }}</span>
+            </div>
+        </div>
+    </div>
+    <form method="post" action="{% url 'learning:card_grade' review.id %}" class="grades" data-grades hidden>
+        {% csrf_token %}{% if item_code %}<input type="hidden" name="item" value="{{ item_code }}">{% endif %}
+        <button class="btn" name="grade" value="again">Again <span class="muted small">1</span></button>
+        <button class="btn" name="grade" value="hard">Hard <span class="muted small">2</span></button>
+        <button class="btn btn-primary" name="grade" value="good">Good <span class="muted small">3</span></button>
+        <button class="btn" name="grade" value="easy">Easy <span class="muted small">4</span></button>
+    </form>
+    <div style="display:flex;justify-content:center">{% include "partials/_review_note.html" with obj=review.card what="This card" %}</div>
+    <p class="note" style="text-align:center">Cards ask where things live and when a method applies, not values the exam supplies.</p>
+{% else %}
+    <section class="card" style="max-width:640px">
+        <h2>All caught up</h2>
+        <p class="secondary">No cards are due. New cards join the queue as you finish lessons.</p>
+        <a class="btn btn-primary" href="{% url 'learning:practice' %}">Other practice</a>
+    </section>
+{% endif %}
+{% endblock %}
