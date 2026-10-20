@@ -92,6 +92,8 @@ class Command(BaseCommand):
                 data = {"choice": q["options"].index(d.answer) if good else (q["options"].index(d.answer) + 1) % 4}
             else:
                 data = {"choice": 0}
+            if q.get("stage") == "fade":
+                data["hint_used"] = "1"  # steps were shown, as in the real loop
             secs = int(rng.gauss(35, 12)) if q["type"] == "lookup" else int(rng.gauss(330 - day * 2, 90))
             att = sessions.record(session, pos, data, max(8, secs), user)
             Attempt.objects.filter(pk=att.pk).update(created_at=at)
@@ -108,6 +110,22 @@ class Command(BaseCommand):
             sessions.finish(s)
             PracticeSession.objects.filter(pk=s.pk).update(finished_at=at + timedelta(minutes=6 * len(s.items)))
             return s
+
+        def lesson_loop(item, day):
+            """One pass through the lesson loop, step by step, as a student would."""
+            at = start + timedelta(days=day, hours=19)
+            s = PracticeSession.objects.create(student=user, kind=Kind.LESSON, spec_item=item, items=[], started_at=at)
+            templates = sessions.active_templates([item])
+            steps = [("prime", None), ("fade", 1), ("fade", 2), ("try", None), ("try", None), ("try", None)]
+            for i, (stage, fade) in enumerate(steps):
+                extra = {"stage": stage, **({"fade": fade} if fade else {})}
+                s.items = s.items + [sessions.problem(templates[i % len(templates)], rng, **extra)]
+                s.save(update_fields=["items"])
+                answer(s, len(s.items) - 1, day, at + timedelta(minutes=4 * i))
+            PracticeSession.objects.filter(pk=s.pk).update(finished_at=at + timedelta(minutes=40))
+            lp = LessonProgress.objects.create(student=user, spec_item=item, stage=LessonProgress.Stage.DONE, completed_at=at + timedelta(minutes=40))
+            LessonProgress.objects.filter(pk=lp.pk).update(started_at=at)
+            mastery.ensure_cards(user, [item])
 
         def backdate_reviews(day):
             # schedule_item ran at "now"; shift what it wrote back to `day`.
@@ -131,8 +149,7 @@ class Command(BaseCommand):
                 continue  # a rest day
             if day % 3 == 1 and order:
                 it = order.pop(0)
-                lp = LessonProgress.objects.create(student=user, spec_item=it, stage=LessonProgress.Stage.DONE, completed_at=start + timedelta(days=day))
-                LessonProgress.objects.filter(pk=lp.pk).update(started_at=start + timedelta(days=day))
+                lesson_loop(it, day)
                 run(Kind.DRILL, day, it)
             else:
                 run(rng.choice([Kind.DRILL, Kind.ESTIMATE, Kind.WARMUP, Kind.DRILL]), day, rng.choice(items))

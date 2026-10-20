@@ -39,7 +39,8 @@
         {% for a in answered %}
             <section class="card review-item" style="max-width:820px">
                 <div class="card-head">
-                    <h3>{% if a.q.stage == "testout" %}Test-out question{% elif a.q.stage == "fade" %}Worked example, step {{ a.q.fade|add:1 }}{% elif a.q.stage == "try" %}Try {{ forloop.counter }}{% else %}Cold try{% endif %}</h3>
+                    <h3>{% if a.q.stage == "testout" %}Test-out question{% elif a.q.stage == "fade" %}Worked example, step {{ a.q.fade|add:1 }}{% elif a.q.stage == "try" %}Try it yourself{% else %}Cold try{% endif %}
+                        <span class="muted small" style="font-family:var(--font-body);font-weight:500">· {{ a.att.created_at|date:"M j" }}{% if runs > 1 %} · time {{ a.run }} through the lesson{% endif %}</span></h3>
                     {% if a.att.is_correct %}<span class="badge badge-good">Correct</span>{% else %}<span class="badge badge-bad">Missed{% if a.att.cause %} · {{ a.att.get_cause_display }}{% endif %}</span>{% endif %}
                 </div>
                 <p class="q-stem">{{ a.instance.stem }}</p>
@@ -49,7 +50,10 @@
                 <details><summary class="small"><strong>Verified solution</strong></summary><ol class="steps" style="margin-top:8px">{% for st in a.instance.steps %}<li>{{ st.text }}</li>{% endfor %}</ol></details>
             </section>
         {% empty %}
-            <section class="card"><p class="empty">Nothing answered in this step yet.</p></section>
+            <section class="card" style="max-width:820px">
+                <p class="empty">{% if review.key == "prime" %}There's no cold try on record for this topic.{% elif review.key == "fade" %}There are no worked-example answers on record for this topic.{% else %}There are no "Try it yourself" answers on record for this topic.{% endif %}</p>
+                <p class="note">{% if runs %}This step wasn't answered when you went through the lesson.{% else %}This topic was marked as studied without going through the lesson steps, so they weren't recorded.{% endif %} <a href="{% url 'learning:topic' item.code %}">Practice this topic</a> to see where you stand.</p>
+            </section>
         {% endfor %}
     {% endif %}
 {% else %}

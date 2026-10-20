@@ -320,16 +320,18 @@ def review_context(user, item, lp, step):
         return tutorial_context(item)
     if step == Stage.DONE:
         return {"summary": lesson_summary(user, item)}
-    session = PracticeSession.objects.filter(student=user, kind=Kind.LESSON, spec_item=item).first()
+    # Every time through the loop, newest first: a redo starts a new lesson
+    # session, and the earlier cold try and problems belong in the record too.
     stages = {Stage.PRIME: ("prime", "testout"), Stage.FADE: ("fade",), Stage.TRY: ("try",)}[step]
     answered = []
-    if session:
+    runs = list(PracticeSession.objects.filter(student=user, kind=Kind.LESSON, spec_item=item).order_by("-started_at"))
+    for run_number, session in zip(range(len(runs), 0, -1), runs):
         attempts = {a.position: a for a in session.attempts.select_related("instance__template")}
         for pos, q in enumerate(session.items):
             if q.get("stage") in stages and pos in attempts:
                 att = attempts[pos]
-                answered.append({"q": q, "att": att, "instance": att.instance, "chosen": att.response})
-    ctx = {"answered": answered}
+                answered.append({"q": q, "att": att, "instance": att.instance, "chosen": att.response, "run": run_number})
+    ctx = {"answered": answered, "runs": len(runs)}
     if step == Stage.FADE:
         ctx["worked"] = sessions.new_instance(random.choice(sessions.active_templates([item])))
     return ctx

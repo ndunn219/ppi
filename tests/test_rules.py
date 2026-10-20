@@ -148,3 +148,44 @@ class PlanningTest(TestCase):
         self.assertEqual(self.profile.plan["reason"], "settings")
         self.assertEqual(self.profile.plan["start"], timezone.localdate().isoformat())
         self.assertEqual(self.profile.plan["weeks"], 10)
+
+
+class LessonReviewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_course", verbosity=0)
+
+    def setUp(self):
+        from curriculum.models import ExamModule
+
+        self.user = User.objects.create_user("lr")
+        StudentProfile.objects.create(user=self.user, module=ExamModule.objects.first())
+        self.client.force_login(self.user)
+
+    def walk(self, code):
+        """Answer the cold try, then step through to the end of the loop."""
+        for _ in range(16):
+            html = self.client.get(f"/study/{code}/").content.decode()
+            if f'action="/study/{code}/answer/"' in html:
+                self.client.post(f"/study/{code}/answer/", {"choice": "0", "seconds": 60})
+            elif "Lesson complete" in html or "Tested out" in html:
+                return
+            else:
+                self.client.post(f"/study/{code}/next/", {"action": "next"})
+
+    def test_cold_try_survives_a_redo(self):
+        self.walk("SD1")
+        self.client.post("/study/SD1/next/", {"action": "restart"})
+        self.walk("SD1")
+        resp = self.client.get("/study/SD1/?step=prime")
+        self.assertContains(resp, "Cold try")
+        self.assertContains(resp, "time 1 through the lesson")
+        self.assertNotContains(resp, "no cold try on record")
+
+    def test_no_record_says_why(self):
+        from learning.models import LessonProgress
+
+        LessonProgress.objects.create(student=self.user, spec_item=SpecItem.objects.get(code="TE3"), stage=LessonProgress.Stage.DONE)
+        resp = self.client.get("/study/TE3/?step=prime")
+        self.assertContains(resp, "no cold try on record")
+        self.assertContains(resp, "marked as studied without going through the lesson steps")
