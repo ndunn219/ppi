@@ -67,7 +67,7 @@
             </div>
             <div class="actions">
                 {% if number < total %}<button class="btn btn-primary" name="action" value="next">Save and next</button>{% endif %}
-                <button class="btn{% if number == total %} btn-primary{% endif %}" name="action" value="finish" data-confirm="Submit the whole session? You can't change answers after this.">Submit session</button>
+                <button class="btn{% if number == total %} btn-primary{% endif %}" name="action" value="finish" data-confirm-title="Submit the session?" data-confirm="Unanswered questions count as wrong, and you can't change answers after this." data-confirm-ok="Submit" data-confirm-tone="danger">Submit session</button>
             </div>
         {% else %}
             <span></span>

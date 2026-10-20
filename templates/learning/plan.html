@@ -9,7 +9,7 @@
     {% if est.diagnostic_done and not saved %}
         <form method="post" action="{% url 'learning:accept_plan' %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Accept plan</button></form>
     {% elif saved %}
-        <form method="post" action="{% url 'learning:replan' %}">{% csrf_token %}<button class="btn" type="submit" data-confirm="Rebuild the schedule from today? Your mastery, answers and reviews are kept; only the target weeks change.">Re-plan from today</button></form>
+        <form method="post" action="{% url 'learning:replan' %}">{% csrf_token %}<button class="btn" type="submit" data-confirm-title="Re-plan from today?" data-confirm="The topics you haven't finished get new target weeks, spread over the time you have left. Your mastery, answers, flashcards and reviews are kept." data-confirm-ok="Re-plan">Re-plan from today</button></form>
     {% endif %}
 {% endblock %}
 {% block content %}
@@ -33,7 +33,7 @@
             <p class="secondary">{{ saved.done }} of {{ saved.rows|length }} topics done. Keep working down the list.</p>
         {% else %}
             <p class="secondary">{{ saved.overdue }} topic{{ saved.overdue|pluralize:" is,s are" }} past {{ saved.overdue|pluralize:"its,their" }} target week. You can catch up, change your exam date or weekly hours (the plan rebuilds to fit), or re-plan from today to spread what's left over the time you have.</p>
-            <form method="post" action="{% url 'learning:replan' %}">{% csrf_token %}<button class="btn btn-primary btn-small" data-confirm="Rebuild the schedule from today? Your mastery, answers and reviews are kept; only the target weeks change.">Re-plan from today</button></form>
+            <form method="post" action="{% url 'learning:replan' %}">{% csrf_token %}<button class="btn btn-primary btn-small" data-confirm-title="Re-plan from today?" data-confirm="The topics you haven't finished get new target weeks, spread over the time you have left. Your mastery, answers, flashcards and reviews are kept." data-confirm-ok="Re-plan">Re-plan from today</button></form>
         {% endif %}
     </section>
     <section class="card">

@@ -38,4 +38,10 @@ def shell(request):
 
 
 def assets(request):
+    """A version for CSS and JS links. In development it follows the files'
+    modification times, so an edited script is never served from cache."""
+    if settings.DEBUG:
+        root = settings.BASE_DIR / "static"
+        latest = max((p.stat().st_mtime for p in root.rglob("*") if p.suffix in (".js", ".css")), default=0)
+        return {"asset_version": str(int(latest))}
     return {"asset_version": settings.ASSET_VERSION}

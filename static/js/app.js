@@ -126,10 +126,103 @@
     });
   }
 
+  // --- Dialogs ----------------------------------------------------------------
+  //
+  // Styled replacements for alert(), confirm() and prompt(), built on the
+  // native <dialog> element (focus moves in and back, Escape cancels, the
+  // page behind is inert). Each returns a Promise:
+  //
+  //   PEDialog.confirm({title, message, ok, cancel, tone}) -> true / false
+  //   PEDialog.alert({title, message, ok})                  -> undefined
+  //   PEDialog.prompt({title, message, value, ok, readonly, copy}) -> text / null
+  //
+  // tone "danger" gives the confirm button a red style.
+  var PEDialog = (window.PEDialog = (function () {
+    function open(opts) {
+      return new Promise(function (resolve) {
+        var dlg = document.createElement("dialog");
+        dlg.className = "pe-dialog" + (opts.tone ? " is-" + opts.tone : "");
+        dlg.setAttribute("aria-labelledby", "pe-dialog-title");
+        var field = opts.kind === "prompt"
+          ? '<div class="pe-dialog-field"><input type="text" class="pe-dialog-input"' + (opts.readonly ? " readonly" : "") + ' aria-label="' + esc(opts.title || "Value") + '"></div>'
+          : "";
+        var cancel = opts.kind === "alert" ? "" : '<button type="button" class="btn btn-ghost" data-dialog-cancel>' + esc(opts.cancel || "Cancel") + "</button>";
+        var okClass = opts.tone === "danger" ? "btn btn-danger" : "btn btn-primary";
+        dlg.innerHTML =
+          '<form method="dialog" class="pe-dialog-body">' +
+          '<h2 id="pe-dialog-title">' + esc(opts.title || "") + "</h2>" +
+          (opts.message ? '<p class="pe-dialog-message">' + esc(opts.message) + "</p>" : "") +
+          field +
+          '<div class="pe-dialog-actions">' + cancel +
+          '<button type="submit" class="' + okClass + '" value="ok" data-dialog-ok>' + esc(opts.ok || "OK") + "</button></div>" +
+          "</form>";
+        document.body.appendChild(dlg);
+        var input = dlg.querySelector(".pe-dialog-input");
+        if (input) input.value = opts.value || "";
+        var result = opts.kind === "confirm" ? false : null;
+
+        dlg.querySelector("form").addEventListener("submit", function (e) {
+          e.preventDefault();
+          if (opts.kind === "prompt" && opts.copy && input) {
+            input.select();
+            var copied = navigator.clipboard ? navigator.clipboard.writeText(input.value) : Promise.reject();
+            copied.then(function () { result = input.value; dlg.close(); }, function () {
+              try { document.execCommand("copy"); result = input.value; dlg.close(); } catch (err) { input.select(); }
+            });
+            return;
+          }
+          result = opts.kind === "confirm" ? true : (input ? input.value : undefined);
+          dlg.close();
+        });
+        var cancelBtn = dlg.querySelector("[data-dialog-cancel]");
+        if (cancelBtn) cancelBtn.addEventListener("click", function () { dlg.close(); });
+        dlg.addEventListener("click", function (e) { if (e.target === dlg && opts.kind !== "alert") dlg.close(); });
+        dlg.addEventListener("close", function () {
+          dlg.remove();
+          resolve(opts.kind === "alert" ? undefined : result);
+        });
+        dlg.showModal();
+        if (input) { input.focus(); input.select(); }
+        else dlg.querySelector(opts.kind === "confirm" && opts.tone === "danger" ? "[data-dialog-cancel]" : "[data-dialog-ok]").focus();
+      });
+    }
+
+    function esc(t) {
+      return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
+    }
+
+    return {
+      confirm: function (o) { return open(Object.assign({ kind: "confirm", title: "Are you sure?" }, o)); },
+      alert: function (o) { return open(Object.assign({ kind: "alert" }, o)); },
+      prompt: function (o) { return open(Object.assign({ kind: "prompt" }, o)); },
+    };
+  })());
+
+  // Buttons and links with data-confirm ask first. Optional attributes:
+  // data-confirm-title, data-confirm-ok (button label), data-confirm-tone.
   function confirms() {
     document.querySelectorAll("[data-confirm]").forEach(function (el) {
       el.addEventListener("click", function (e) {
-        if (!window.confirm(el.getAttribute("data-confirm"))) e.preventDefault();
+        if (el.dataset.confirmed === "1") { el.dataset.confirmed = ""; return; }
+        e.preventDefault();
+        PEDialog.confirm({
+          title: el.getAttribute("data-confirm-title") || "Are you sure?",
+          message: el.getAttribute("data-confirm"),
+          ok: el.getAttribute("data-confirm-ok") || "Continue",
+          tone: el.getAttribute("data-confirm-tone") || "",
+        }).then(function (yes) {
+          if (!yes) return;
+          if (el.form && el.type === "submit") {
+            // Submit with this button, so its name and value are sent.
+            if (el.form.requestSubmit) el.form.requestSubmit(el);
+            else { el.dataset.confirmed = "1"; el.click(); }
+          } else if (el.href) {
+            window.location.href = el.href;
+          } else {
+            el.dataset.confirmed = "1";
+            el.click();
+          }
+        });
       });
     });
   }
@@ -138,9 +231,14 @@
     document.querySelectorAll("[data-copy]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var text = btn.getAttribute("data-copy");
-        var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy link"; }, 1500); };
-        if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () { window.prompt("Copy this link", text); });
-        else window.prompt("Copy this link", text);
+        var label = btn.textContent;
+        var done = function () { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = label; }, 1500); };
+        var fallback = function () {
+          PEDialog.prompt({ title: "Copy this link", message: "Your browser blocked copying automatically. Copy the link below.", value: text, readonly: true, copy: true, ok: "Copy", cancel: "Close" })
+            .then(function (v) { if (v) done(); });
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, fallback);
+        else fallback();
       });
     });
   }

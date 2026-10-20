@@ -66,7 +66,7 @@
                 <p class="small secondary">Signing as <strong>{{ reviewer.name }}</strong>, {{ reviewer.license }}.</p>
                 <div><label for="notes">Notes</label><textarea id="notes" name="notes" placeholder="Required if changes are needed: what is wrong and what it should say.">{{ u.notes }}</textarea></div>
                 <div class="actions">
-                    <button class="btn btn-primary" name="decision" value="approved" data-confirm="Approve this content as technically correct? Your name and license will be shown to students.">Approve</button>
+                    <button class="btn btn-primary" name="decision" value="approved" data-confirm-title="Approve this content?" data-confirm="You are confirming it is technically correct. Your name, license and today's date will be shown to students beside it." data-confirm-ok="Approve">Approve</button>
                     <button class="btn" name="decision" value="changes">Needs changes</button>
                 </div>
                 <p class="note">Approving stamps your name, license and today's date on {% if u.objects|length > 1 %}all {{ u.objects|length }} items{% else %}this content{% endif %}, and shows students it is PE-reviewed.</p>

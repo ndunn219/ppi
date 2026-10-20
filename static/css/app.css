@@ -538,3 +538,18 @@ table.table { width: 100%; border-collapse: collapse; font-size: 14px; }
 /* PE review */
 .review-topic + .review-topic { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
 .review-note { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text-2); }
+
+/* Dialogs (PEDialog in app.js) */
+.pe-dialog { border: 0; padding: 0; border-radius: var(--r-lg); background: var(--card); color: var(--text); box-shadow: var(--shadow-lg, 0 12px 32px rgba(14, 60, 46, 0.18)); width: min(440px, calc(100vw - 32px)); }
+.pe-dialog::backdrop { background: rgba(27, 36, 32, 0.45); backdrop-filter: blur(2px); }
+.pe-dialog[open] { animation: pe-dialog-in 0.16s ease-out; }
+@keyframes pe-dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.pe-dialog-body { padding: 22px 22px 18px; margin: 0; }
+.pe-dialog-body h2 { font-size: 18px; margin: 0 0 8px; }
+.pe-dialog-message { color: var(--text-2); margin: 0 0 16px; line-height: 1.5; }
+.pe-dialog-field { margin-bottom: 16px; }
+.pe-dialog-input { font-family: var(--font-mono); font-size: 13px; }
+.pe-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.pe-dialog.is-danger h2 { color: var(--bad); }
+.btn-danger { background: var(--bad); border-color: var(--bad); color: #fff; }
+.btn-danger:hover { background: #A82E3D; border-color: #A82E3D; color: #fff; }
