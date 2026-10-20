@@ -25,6 +25,7 @@ from reports.models import SharedReport  # noqa: E402
 
 setup_test_environment()
 settings.ALLOWED_HOSTS.append("testserver")
+settings.ANTHROPIC_API_KEY = ""  # never call the paid tutor API from the smoke walk
 User.objects.filter(username="smoke").delete()
 user = User.objects.create_user("smoke", "", "x")
 c = Client()
